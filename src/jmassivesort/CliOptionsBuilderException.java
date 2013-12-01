@@ -27,7 +27,7 @@ public class CliOptionsBuilderException extends RuntimeException {
    public CliOptionsBuilderException(String error, Map<String, String> paramsDescription) {
       super(error);
       if (paramsDescription == null)
-         throw new IllegalArgumentException();
+         throw new IllegalArgumentException("paramsDescription cannot be null");
       this.paramsDescription = paramsDescription;
    }
 

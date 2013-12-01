@@ -34,7 +34,7 @@ public class JMassiveSort {
    }};
 
    private static final Map<String, SortingAlgorithmBuilder> algorithms = new HashMap<String, SortingAlgorithmBuilder>() {{
-      put(TWO_WAY_MERGESORT_NAME, TwoWayMergeSortOptions.builder());
+      put(TWO_WAY_MERGESORT_NAME, TwoWayMergeSortOptions.algorithmBuilder());
    }};
 
    private static String algorithmName;
