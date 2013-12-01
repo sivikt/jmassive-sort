@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * todo javadoc
  * @author Serj Sintsov
  */
 public class JMassiveSort {

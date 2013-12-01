@@ -16,6 +16,7 @@
 package jmassivesort;
 
 /**
+ * todo javadoc
  * @author Serj Sintsov
  */
 public interface SortingAlgorithmBuilder {
