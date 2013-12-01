@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmassivesort.extsort;
+package jmassivesort;
 
-import org.jmassivesort.SortingAlgorithm;
+import java.util.Map;
 
 /**
  * @author Serj Sintsov
  */
-public class TwoWayMergeSort implements SortingAlgorithm {
+public class CliOptionsBuilderException extends RuntimeException {
 
-   private TwoWayMergeSortOptions options;
+   private Map<String, String> paramsDescription;
 
-   public TwoWayMergeSort(TwoWayMergeSortOptions options) {
-      this.options = options;
+   public CliOptionsBuilderException(String error, Map<String, String> paramsDescription) {
+      super(error);
+      if (paramsDescription == null)
+         throw new IllegalArgumentException();
+      this.paramsDescription = paramsDescription;
    }
 
-   @Override
-   public void apply() {
-
-   }
-
-   public static void main(String[] args) {
-
+   public Map<String, String> getOptionDescriptions() {
+      return paramsDescription;
    }
 
 }
-

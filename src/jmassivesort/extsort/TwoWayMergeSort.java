@@ -13,13 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmassivesort;
+package jmassivesort.extsort;
+
+import jmassivesort.SortingAlgorithm;
 
 /**
  * @author Serj Sintsov
  */
-public interface SortingAlgorithm {
+public class TwoWayMergeSort implements SortingAlgorithm {
 
-   void apply();
+   private TwoWayMergeSortOptions options;
+
+   public TwoWayMergeSort(TwoWayMergeSortOptions options) {
+      this.options = options;
+   }
+
+   @Override
+   public void apply() {
+      System.out.println("TwoWayMergeSort");
+   }
+
+   public static void main(String[] args) {
+
+   }
 
 }
+

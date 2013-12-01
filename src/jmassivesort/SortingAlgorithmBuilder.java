@@ -13,26 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmassivesort;
-
-import java.util.Map;
+package jmassivesort;
 
 /**
  * @author Serj Sintsov
  */
-public class CliOptionsBuilderException extends RuntimeException {
-
-   private Map<String, String> paramsDescription;
-
-   public CliOptionsBuilderException(String error, Map<String, String> paramsDescription) {
-      super(error);
-      if (paramsDescription == null)
-         throw new IllegalArgumentException();
-      this.paramsDescription = paramsDescription;
-   }
-
-   public Map<String, String> getOptionDescriptions() {
-      return paramsDescription;
-   }
-
+public interface SortingAlgorithmBuilder {
+   
+   SortingAlgorithm build(String[] options) throws CliOptionsBuilderException;
+   
 }

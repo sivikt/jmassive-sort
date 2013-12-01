@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jmassivesort.extsort;
+package jmassivesort.extsort;
 
-import org.jmassivesort.CliOptionsBuilderException;
-import org.jmassivesort.SortingAlgorithm;
-import org.jmassivesort.SortingAlgorithmBuilder;
+import jmassivesort.CliOptionsBuilderException;
+import jmassivesort.SortingAlgorithm;
+import jmassivesort.SortingAlgorithmBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Serj Sintsov
@@ -29,9 +32,17 @@ public class TwoWayMergeSortOptions {
    }
 
    public static class TwoWayMergeSortBuilder implements SortingAlgorithmBuilder {
+      private static final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
+         put("<taskId>", "The result of sorting is stored into file <taskId>.txt");
+         put("<numTasks>", "Number of tasks");
+         put("<inputFile>", "Input file to sort");
+      }};
+
       @Override
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
-         return null;
+         throw new CliOptionsBuilderException("Options are undefined", optionDescriptions);
+
+         //return new TwoWayMergeSort(new TwoWayMergeSortOptions());
       }
    }
 
