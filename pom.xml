@@ -29,11 +29,17 @@
    <build>
       <sourceDirectory>${basedir}/src</sourceDirectory>
       <scriptSourceDirectory>${basedir}/scripts</scriptSourceDirectory>
+      <testSourceDirectory>${basedir}/testSrc</testSourceDirectory>
       <resources>
          <resource>
             <directory>${basedir}/src/resources</directory>
          </resource>
       </resources>
+      <testResources>
+         <testResource>
+            <directory>${basedir}/testSrc/resources</directory>
+         </testResource>
+      </testResources>
 
       <plugins>
          <plugin>
