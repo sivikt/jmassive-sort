@@ -21,16 +21,16 @@ import java.util.Map;
  * todo javadoc
  * @author Serj Sintsov
  */
-public class HelpFormatter {
+public class JMassiveSortUsageFormatter {
 
    private static final int KEY_LEFT_PADDING = 4;
    private static final int VALUE_LEFT_PADDING = 30;
 
-   public static void printUsage(String error, Map<String, String> paramsDescription) {
-      printUsage(error, null, paramsDescription);
+   public static void printUsage(String error, Map<String, String> optionsDescription) {
+      printUsage(error, null, optionsDescription);
    }
 
-   public static void printUsage(String error, String algorithmName, Map<String, String> paramsDescription) {
+   public static void printUsage(String error, String algorithmName, Map<String, String> optionsDescription) {
       StringBuilder buf = new StringBuilder();
 
       appendLine(buf, "Error: %s", error);
@@ -38,8 +38,8 @@ public class HelpFormatter {
       appendLine(buf, "Usage: java -jar jar_file %s[-options]", algorithmName == null ? "" : algorithmName + " ");
       appendLine(buf, "where options include:");
 
-      for (String option : paramsDescription.keySet())
-         appendKeyValue(buf, option, paramsDescription.get(option));
+      for (String option : optionsDescription.keySet())
+         appendKeyValue(buf, option, optionsDescription.get(option));
 
       printMsg(buf.toString());
    }

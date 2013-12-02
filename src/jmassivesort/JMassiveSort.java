@@ -41,22 +41,9 @@ public class JMassiveSort {
    private static String algorithmName;
    private static String[] algorithmOptions;
 
-   public static void main(String[] args) {
-      buildOptions(args);
-      SortingAlgorithmBuilder alg = chooseAlgorithm(algorithmName);
-
-      try {
-         alg.build(algorithmOptions).apply();
-      }
-      catch (CliOptionsBuilderException e) {
-         HelpFormatter.printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());
-         System.exit(1);
-      }
-   }
-
    public static SortingAlgorithmBuilder chooseAlgorithm(String algorithmName) {
       if (!algorithms.containsKey(algorithmName)) {
-         HelpFormatter.printUsage("unknown algorithm '" + algorithmName + "'", optionDescriptions);
+         JMassiveSortUsageFormatter.printUsage("unknown algorithm '" + algorithmName + "'", optionDescriptions);
          System.exit(1);
       }
 
@@ -65,12 +52,25 @@ public class JMassiveSort {
 
    public static void buildOptions(String[] options) throws CliOptionsBuilderException {
       if (options.length == 0) {
-         HelpFormatter.printUsage("specify options", optionDescriptions);
+         JMassiveSortUsageFormatter.printUsage("specify options", optionDescriptions);
          System.exit(1);
       }
 
       algorithmName = options[0];
       algorithmOptions = Arrays.copyOfRange(options, 1, options.length);
+   }
+
+   public static void main(String[] args) {
+      buildOptions(args);
+      SortingAlgorithmBuilder alg = chooseAlgorithm(algorithmName);
+
+      try {
+         alg.build(algorithmOptions).apply();
+      }
+      catch (CliOptionsBuilderException e) {
+         JMassiveSortUsageFormatter.printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());
+         System.exit(1);
+      }
    }
 
 }
