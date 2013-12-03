@@ -100,43 +100,40 @@ public class TwoWayMergeSort implements SortingAlgorithm {
       long i = 0;
       long j = 0;
 
-      String leftItem = leftRd.readLine();
-      String rightItem = rightRd.readLine();
+      String left = leftRd.readLine();
+      String right = rightRd.readLine();
 
-      while (leftItem != null && rightItem != null) {
-         long left = Long.parseLong(leftItem);
-         long right = Long.parseLong(rightItem);
-
-         if (left <= right) {
-            outWr.write(leftItem);
+      while (left != null && right != null) {
+         if (left.compareTo(right) <= 0) {
+            outWr.write(left);
             outWr.newLine();
             i++;
-            if (i < seriesSz) leftItem = leftRd.readLine();
-            else leftItem = null;
+            if (i < seriesSz) left = leftRd.readLine();
+            else left = null;
          }
-         else if (left > right) {
-            outWr.write(rightItem);
+         else {
+            outWr.write(right);
             outWr.newLine();
             j++;
-            if (j < seriesSz) rightItem = rightRd.readLine();
-            else rightItem = null;
+            if (j < seriesSz) right = rightRd.readLine();
+            else right = null;
          }
       }
 
-      while (leftItem != null) {
-         outWr.write(leftItem);
+      while (left != null) {
+         outWr.write(left);
          outWr.newLine();
          i++;
-         if (i < seriesSz) leftItem = leftRd.readLine();
-         else leftItem = null;
+         if (i < seriesSz) left = leftRd.readLine();
+         else left = null;
       }
 
-      while (rightItem != null) {
-         outWr.write(rightItem);
+      while (right != null) {
+         outWr.write(right);
          outWr.newLine();
          j++;
-         if (j < seriesSz) rightItem = rightRd.readLine();
-         else rightItem = null;
+         if (j < seriesSz) right = rightRd.readLine();
+         else right = null;
       }
 
       return i != seriesSz || j != seriesSz;

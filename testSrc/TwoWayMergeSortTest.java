@@ -25,7 +25,7 @@ public class TwoWayMergeSortTest {
 
    public static void main(String[] args) throws IOException {
       long start = System.currentTimeMillis();
-      JMassiveSort.main(new String[] {"2way-mergesort", "777", "testSrc/resources/inputLarge.txt"});
+      JMassiveSort.main(new String[] {"2way-mergesort", "777", "testSrc/resources/inputBig.txt"});
       long end = System.currentTimeMillis();
 
       System.out.println("Sorted in " + (double)(end - start)/1000 + " s");
@@ -35,16 +35,14 @@ public class TwoWayMergeSortTest {
 
       BufferedReader br = new BufferedReader(new FileReader(output));
 
-      String line = br.readLine();
-      if (line == null) {
+      String key = br.readLine();
+      if (key == null) {
          System.out.println("Output file is empty");
          return;
       }
-      long prevValue = Long.parseLong(line);
-      for (int i = 2; (line = br.readLine()) != null; i++) {
-         long value = Long.parseLong(line);
-         if (value < prevValue) throw new IllegalStateException("Incorrect value at position " + i);
-      }
+      String prevKey = key;
+      for (int i = 2; (key = br.readLine()) != null; i++)
+         if (key.compareTo(prevKey) <= 0) throw new IllegalStateException("Incorrect value at position " + i);
    }
 
 }
