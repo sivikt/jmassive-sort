@@ -38,6 +38,9 @@
       <testResources>
          <testResource>
             <directory>${basedir}/testSrc/resources</directory>
+            <excludes>
+               <exclude>**/*.txt</exclude>
+            </excludes>
          </testResource>
       </testResources>
 
