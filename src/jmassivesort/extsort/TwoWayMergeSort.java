@@ -15,7 +15,6 @@
  */
 package jmassivesort.extsort;
 
-import jmassivesort.SortingAlgorithm;
 import jmassivesort.SortingAlgorithmException;
 
 import java.io.*;
@@ -27,7 +26,7 @@ import java.util.UUID;
  * todo make it stateless
  * @author Serj Sintsov
  */
-public class TwoWayMergeSort implements SortingAlgorithm {
+public class TwoWayMergeSort extends AbstractAlgorithm {
 
    private TwoWayMergeSortOptions options;
 
@@ -203,33 +202,12 @@ public class TwoWayMergeSort implements SortingAlgorithm {
       return i;
    }
 
-   private void closeSilently(Closeable target) {
-      try {
-         if (target != null) target.close();
-      }
-      catch (IOException e) { /** nothing to do */ }
-   }
-
-   private File createNewFile(String path) {
-      File newFile = new File(path);
-      try {
-         if (newFile.createNewFile()) return newFile;
-         else throw new SortingAlgorithmException("File '" + path + "' already exists");
-      } catch (IOException e) {
-         throw new SortingAlgorithmException("Creation of file '" + path + "' is failed due to the error", e);
-      }
-   }
-
    private String sortedFileName() {
-      return options.getTaskId() + ".txt";
+      return options.getOutputId() + ".txt";
    }
 
    private String generateBufferName() {
-      return options.getTaskId() + "_" + UUID.randomUUID().toString() + ".tmp";
-   }
-
-   private void debug(String msg, Object... params) {
-      System.out.println(">>> debug: " + String.format(msg, params));
+      return options.getOutputId() + "_" + UUID.randomUUID().toString() + ".tmp";
    }
 
 }

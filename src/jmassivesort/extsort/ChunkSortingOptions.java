@@ -27,68 +27,80 @@ import java.util.Map;
  * todo javadoc
  * @author Serj Sintsov
  */
-public class TwoWayMergeSortOptions {
+public class ChunkSortingOptions {
 
-   private int outputId;
+   private int chunkId;
+   private int numChunks;
    private String inputFilePath;
 
    public static Builder builder() {
       return new Builder();
    }
 
-   public static TwoWayMergeSortBuilder algorithmBuilder() {
-      return new TwoWayMergeSortBuilder();
+   public static ChunkSortingBuilder algorithmBuilder() {
+      return new ChunkSortingBuilder();
    }
 
    public static class Builder {
       private final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
-         put("<outputId>", "Integer value. The result of sorting is stored into file <outputId>.txt");
-         put("<inputFile>", "Input file to sort");
+         put("<chunkId>", "0 < Integer value <= <numChunks>. The result of sorting is stored into file <chunkId>.txt");
+         put("<numChunks>", "Integer value > 0. Together with the <chunkId> used to determine what part of file to sort");
+         put("<inputFile>", "Input file");
       }};
 
-      protected int outputId;
+      protected int chunkId;
+      protected int numChunks;
       protected String inputFilePath;
 
-      public TwoWayMergeSortOptions build(String[] options) throws CliOptionsBuilderException {
-         if (options == null || options.length != 2)
+      public ChunkSortingOptions build(String[] options) throws CliOptionsBuilderException {
+         if (options == null || options.length != 3)
             throw new CliOptionsBuilderException(usage("Incorrect usage"), optionDescriptions);
 
          try {
-            outputId = Integer.parseInt(options[0]);
-            if (outputId < 0)
+            numChunks = Integer.parseInt(options[1]);
+            if (numChunks < 1)
+               throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
+
+            chunkId = Integer.parseInt(options[0]);
+            if (chunkId < 1)
                throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
          }
          catch (NumberFormatException ex) {
             throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
          }
 
-         inputFilePath = options[1];
+         inputFilePath = options[2];
          File in = new File(inputFilePath);
          if (!in.exists() || !in.isFile())
             throw new CliOptionsBuilderException(usage("No such file"), optionDescriptions);
 
-         return new TwoWayMergeSortOptions(outputId, inputFilePath);
+         return new ChunkSortingOptions(chunkId, numChunks, inputFilePath);
       }
 
       private String usage(String error) {
-         return error + ". Specify options in order <outputId> <inputFile>";
+         return error + ". Specify options in order <chunkId> <numChunks> <inputFile>";
       }
    }
 
-   public static class TwoWayMergeSortBuilder implements SortingAlgorithmBuilder {
+   public static class ChunkSortingBuilder implements SortingAlgorithmBuilder {
       @Override
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
-         return new TwoWayMergeSort(TwoWayMergeSortOptions.builder().build(options));
+         return new ChunkSorting(ChunkSortingOptions.builder().build(options));
       }
    }
 
-   protected TwoWayMergeSortOptions(int outputId, String inputFilePath) {
-      this.outputId = outputId;
+   protected ChunkSortingOptions(int chunksId, int numChunks, String inputFilePath) {
+      this.chunkId = chunksId;
+      this.numChunks = numChunks;
       this.inputFilePath = inputFilePath;
    }
 
-   public int getOutputId() {
-      return outputId;
+   public int getChunkId() {
+      return chunkId;
+   }
+
+   public int getNumChunks() {
+      return numChunks;
    }
 
    public String getInputFilePath() {

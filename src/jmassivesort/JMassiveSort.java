@@ -15,6 +15,7 @@
  */
 package jmassivesort;
 
+import jmassivesort.extsort.ChunkSortingOptions;
 import jmassivesort.extsort.TwoWayMergeSortOptions;
 
 import java.util.Arrays;
@@ -28,18 +29,25 @@ import java.util.Map;
 public class JMassiveSort {
 
    private static final String TWO_WAY_MERGESORT_NAME = "2way-mergesort";
+   private static final String CHUNK_SORTING = "chunk-sorting";
 
-   private static final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
-      put("<algorithm_name>", "An algorithm to run. Possible value is " + TWO_WAY_MERGESORT_NAME);
-      put("[-options]", "Algorithm specific options");
-   }};
-
-   private static final Map<String, SortingAlgorithmBuilder> algorithms = new HashMap<String, SortingAlgorithmBuilder>() {{
-      put(TWO_WAY_MERGESORT_NAME, TwoWayMergeSortOptions.algorithmBuilder());
-   }};
+   private static final Map<String, SortingAlgorithmBuilder> algorithms;
+   private static final Map<String, String> optionDescriptions;
 
    private static String algorithmName;
    private static String[] algorithmOptions;
+
+   static {
+      algorithms = new HashMap<String, SortingAlgorithmBuilder>() {{
+         put(TWO_WAY_MERGESORT_NAME, TwoWayMergeSortOptions.algorithmBuilder());
+         put(CHUNK_SORTING, ChunkSortingOptions.algorithmBuilder());
+      }};
+
+      optionDescriptions = new HashMap<String, String>() {{
+         put("<algorithm_name>", "An algorithm to run. Possible value is [" + algorithms.keySet() + "]");
+         put("[-options]", "Algorithm specific options");
+      }};
+   }
 
    public static SortingAlgorithmBuilder chooseAlgorithm(String algorithmName) {
       if (!algorithms.containsKey(algorithmName)) {
