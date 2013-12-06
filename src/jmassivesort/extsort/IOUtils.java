@@ -15,30 +15,20 @@
  */
 package jmassivesort.extsort;
 
-import jmassivesort.SortingAlgorithm;
-import jmassivesort.SortingAlgorithmException;
-
-import java.io.File;
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * todo javadoc
  * @author Serj Sintsov
  */
-public abstract class AbstractAlgorithm implements SortingAlgorithm {
+public final class IOUtils {
 
-   protected File createNewFile(String path) {
-      File newFile = new File(path);
+   public static void closeSilently(Closeable target) {
       try {
-         if (newFile.createNewFile()) return newFile;
-         else throw new SortingAlgorithmException("File '" + path + "' already exists");
-      } catch (IOException e) {
-         throw new SortingAlgorithmException("Creation of file '" + path + "' is failed due to the error", e);
+         if (target != null) target.close();
       }
-   }
-
-   protected void debug(String msg, Object... params) {
-      System.out.println(">>> debug: " + String.format(msg, params));
+      catch (IOException e) { /** nothing to do */ }
    }
 
 }

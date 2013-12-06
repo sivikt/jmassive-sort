@@ -17,7 +17,12 @@ package jmassivesort.extsort;
 
 import jmassivesort.SortingAlgorithmException;
 
-import java.io.*;
+import static jmassivesort.extsort.IOUtils.closeSilently;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 /**
  * Sorts a part of the input file.
@@ -36,14 +41,55 @@ public class ChunkSorting extends AbstractAlgorithm {
 
    @Override
    public void apply() throws SortingAlgorithmException {
-      File sortedChunk = createNewFile(sortedChunkFileName());
-      File srcFile = new File(options.getInputFilePath());
+      readChunk();
+      //sort(lines);
+      //saveChunk(lines);
+   }
 
+   private Chunk readChunk() {
+      File srcFile = new File(options.getInputFilePath());
+      InMemoryChunkReader cr = null;
+
+      try {
+         cr = new InMemoryChunkReader(options.getChunkId(), options.getNumChunks(), srcFile);
+         return cr.readChunk();
+      }
+      catch (FileNotFoundException e) {
+         throw new SortingAlgorithmException("Cannot find file '" + options.getInputFilePath() + "'", e);
+      }
+      catch (IOException e) {
+         throw new SortingAlgorithmException("Cannot read file '" + options.getInputFilePath() + "'", e);
+      }
+      finally {
+         closeSilently(cr);
+      }
+   }
+
+   /**
+    * Uses quick-sort
+    */
+   private void sort(String[] lines) {
 
    }
 
-   private String sortedChunkFileName() {
-      return options.getChunkId() + ".txt";
+   private void saveChunk(String[] lines) {
+      File outFile = createNewFile(options.getChunkId() + ".txt");
+      BufferedWriter outWr = null;
+
+      try {
+         outWr = new BufferedWriter(new FileWriter(outFile));
+         for (int i = 0; i < lines.length; i++) {
+            outWr.write(lines[i]);
+            if (i < lines.length-1)
+               outWr.newLine();
+         }
+      }
+      catch (IOException e) {
+         throw new SortingAlgorithmException("Cannot write to file '" + outFile.getAbsolutePath() + "'", e);
+      }
+      finally {
+         closeSilently(outWr);
+      }
    }
 
 }

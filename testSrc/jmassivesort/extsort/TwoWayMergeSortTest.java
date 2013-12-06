@@ -1,4 +1,4 @@
-/**
+package jmassivesort.extsort; /**
  * Copyright 2013 Serj Sintsov <ssivikt@gmail.com></ssivikt@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  */
 
 import jmassivesort.JMassiveSort;
+import org.testng.annotations.Test;
 
 import java.io.*;
 
@@ -23,7 +24,8 @@ import java.io.*;
  */
 public class TwoWayMergeSortTest {
 
-   public static void main(String[] args) throws IOException {
+   @Test
+   public void test() throws IOException {
       long start = System.currentTimeMillis();
       JMassiveSort.main(new String[] {"2way-mergesort", "777", "testSrc/resources/inputBig.txt"});
       long end = System.currentTimeMillis();

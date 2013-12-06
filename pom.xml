@@ -26,6 +26,15 @@
    <version>0.1</version>
    <description>Java based implementation of sorting algorithms that can handle massive amounts of data</description>
 
+   <dependencies>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>6.8</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
    <build>
       <sourceDirectory>${basedir}/src</sourceDirectory>
       <scriptSourceDirectory>${basedir}/scripts</scriptSourceDirectory>
