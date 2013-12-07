@@ -26,9 +26,11 @@ import java.io.*;
 import java.security.AccessController;
 
 /**
- * Sorts a part of the input file.
- * todo javadoc
- * todo make it stateless
+ * Sorts a specified part of the input file.
+ * <p/>
+ * Reads the file's chunk {@link Chunk}, sorts its content
+ * line by line and stores the result on to the disk.
+ *
  * @author Serj Sintsov
  */
 public class ChunkSorting extends AbstractAlgorithm {
@@ -100,9 +102,6 @@ public class ChunkSorting extends AbstractAlgorithm {
       }
    }
 
-   /**
-    *
-    */
    private Chunk.ChunkLine[] sort(Chunk ch) {
       Chunk.ChunkLine[] lines = ch.getLines();
       quicksort(ch, lines, 0, lines.length - 1);

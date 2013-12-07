@@ -22,8 +22,13 @@ import java.io.*;
 import static jmassivesort.util.IOUtils.closeSilently;
 
 /**
+ * Reads a part of the file's content called {@link Chunk}.
+ * <p/>
+ * This implementation reads the file's part step-by-step by small peaces
+ * keeping in the memory a small buffer of bytes and iterates through the buffer
+ * to separates the part into lines (finds line offset, length) adding each
+ * found line into the resulting chunk.
  *
- * todo javadoc
  * @author Serj Sintsov
  */
 public class IncrementalChunkReader implements Closeable {

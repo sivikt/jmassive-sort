@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * todo javadoc
+ * Command line options to use {@link ChunkSorting} algorithm.
  * @author Serj Sintsov
  */
 public class ChunkSortingOptions {

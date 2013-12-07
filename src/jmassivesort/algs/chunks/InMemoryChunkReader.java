@@ -21,8 +21,12 @@ import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.*;
 
 /**
+ * Reads a part of the file's content called {@link Chunk}.
+ * <p/>
+ * To minimize disk reads this implementation reads the whole
+ * file's part into the memory and then separates the part into
+ * lines (finds lines offsets and etc.)
  *
- * todo javadoc
  * @author Serj Sintsov
  */
 public class InMemoryChunkReader implements Closeable {
