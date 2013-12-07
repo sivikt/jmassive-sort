@@ -25,8 +25,8 @@ import java.io.*;
  */
 public class InMemoryChunkReader implements Closeable {
 
-   private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024; // 1Mb
    private static final int CHUNK_OVERHEAD_SIZE = 1 * 1024 * 1024; // 1Mb
+   private static final int MAX_CHUNK_SIZE      = Integer.MAX_VALUE - CHUNK_OVERHEAD_SIZE - 1;
 
    private final long chunkSz;
    private final long chunkOff;
@@ -34,7 +34,6 @@ public class InMemoryChunkReader implements Closeable {
    private byte[] buffer;
    private int bufferSz;
    private int nextByte;
-   private int nBytes;
 
    private File src;
    private InputStream in;
@@ -46,12 +45,10 @@ public class InMemoryChunkReader implements Closeable {
       long off = chunkId * chunkSz - chunkSz;
       chunkOff = off == src.length() ? -1 : off; // too many chunks
 
-      if (chunkSz == Integer.MAX_VALUE)
-         throw new IllegalArgumentException("Chunk size too large. Max value is " + (Integer.MAX_VALUE-1) + " byte");
+      if (chunkSz == MAX_CHUNK_SIZE)
+         throw new IllegalArgumentException("Chunk size too large. Max value is " + MAX_CHUNK_SIZE + " byte");
 
-      this.src    = src;
-      this.nBytes = 0;
-      this.buffer = new byte[0]; // just to avoid null comparisons
+      this.src = src;
    }
 
    public Chunk readChunk() throws IOException {
@@ -61,6 +58,9 @@ public class InMemoryChunkReader implements Closeable {
       long realOffset = calcOffset(chunkOff, chunkSz, src);
 
       in = createInputStream(src, realOffset);
+
+      fill((int)chunkSz + CHUNK_OVERHEAD_SIZE + 1);
+
       Chunk chunk = new Chunk();
 
       DebugUtils.startFunc("read chunk lines");
@@ -69,8 +69,10 @@ public class InMemoryChunkReader implements Closeable {
       for (;;)
          if (readLine(chunk) == null) break;
 
+      chunk.setContent(buffer);
+
       DebugUtils.stopTimer();
-      DebugUtils.endFunc("read chunk lines (" + nBytes + " bytes)");
+      DebugUtils.endFunc("read chunk lines (" + nextByte + " bytes)");
       DebugUtils.newLine();
 
       return chunk;
@@ -95,12 +97,6 @@ public class InMemoryChunkReader implements Closeable {
       InputStream in = new FileInputStream(f);
 
       try {
-         if (chunkOff == 0) { // don't skip bytes for the first chunk
-            DebugUtils.stopTimer();
-            DebugUtils.endFunc("calc chunk offset");
-            return chunkOff;
-         }
-
          long realOff = 0;
          int b;
          int oldB;
@@ -147,74 +143,68 @@ public class InMemoryChunkReader implements Closeable {
    }
 
    private Chunk.ChunkLine readLine(Chunk chunk) throws IOException {
-      if (nBytes >= chunkSz)
+      if (nextByte >= chunkSz)
          return null;
 
       int b;
-      int oldB;
       int lineTailLen = 0;
       int nextLineOff = nextByte;
-      byte[] lineBuf  = new byte[0];
+      int lineLen     = 0;
 
       for (;;) {
-         b = nextByte();
-         nBytes++;
+         b = buffer[nextByte];
+         nextByte++;
          lineTailLen++;
 
          if (b == -1) { // EOF
-            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen-1);
-            nBytes--;
+            lineLen += lineTailLen-1;
+            nextByte--;
 
-            if (lineBuf.length <= 0)
+            if (lineLen <= 0)
                return null;
             else
-               return chunk.addLine(lineBuf);
+               return chunk.addLine(nextByte - lineLen, lineLen);
          }
          else if (isCR(b) || isLF(b)) { // EOL
-            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen-1);
+            int lnEnd = nextByte-1;
+            lineLen += lineTailLen-1;
 
-            if (nBytes > chunkSz)
-               return chunk.addLine(lineBuf);
+            if (nextByte > chunkSz)
+               return chunk.addLine(lnEnd - lineLen, lineLen);
 
-            oldB = b;
-            b = nextByte();
-            if (!isCRLF(oldB, b) && !isLFCR(oldB, b)) // it could be either CR,
-               nextByte--;                            // LF or CRLF or LFCR
-            else                                      // in that case back byte to buf
-               nBytes++;                              // or skip it
+            b = buffer[nextByte];
+            if (isCRLF(buffer[nextByte-1], b) || isLFCR(buffer[nextByte-1], b)) // it could be either CR,
+               nextByte++;                                                      // LF or CRLF or LFCR
 
-            return chunk.addLine(lineBuf);
+            return chunk.addLine(lnEnd - lineLen, lineLen);
          }
 
-         if (nBytes == chunkSz) {
-            b = nextByte();
-            if (b != -1 && !isCR(b) && !isLF(b)) {
-               nextByte--;
+         if (nextByte == chunkSz) {
+            b = buffer[nextByte];
+            if (b != -1 && !isCR(b) && !isLF(b))
                continue;
-            }
 
-            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen);
-            if (lineBuf.length == 0)
+            nextByte++;
+            lineLen += lineTailLen;
+            if (lineLen == 0)
                return null;
             else
-               return chunk.addLine(lineBuf);
+               return chunk.addLine(nextByte-1 - lineLen, lineLen);
          }
-         else if (nBytes == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
-            b = nextByte();                                    // than the official size
+         else if (nextByte == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
+            b = buffer[nextByte];                                // than the official size
             if (b != -1 && !isCR(b) && !isLF(b))
                throw new IOException("Chunk size too small to store even one line of text");
-            else
-               nextByte--;
 
-            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen);
-            if (lineBuf.length == 0)
+            lineLen += lineTailLen;
+            if (lineLen == 0)
                return null;
             else
-               return chunk.addLine(lineBuf);
+               return chunk.addLine(nextByte - lineLen, lineLen);
          }
 
          if (nextByte == bufferSz) {
-            lineBuf = concat(lineBuf, buffer, nextLineOff, bufferSz-nextLineOff);
+            lineLen    += bufferSz-nextLineOff;
             lineTailLen = 0;
             nextLineOff = 0;
          }
@@ -237,22 +227,9 @@ public class InMemoryChunkReader implements Closeable {
       return c1 == '\n' && c2 == '\r';
    }
 
-   private byte[] concat(byte[] a, byte[] b, int bOff, int bLen) {
-      byte[] n = new byte[a.length + bLen];
-      System.arraycopy(a, 0, n, 0, a.length);
-      System.arraycopy(b, bOff, n, a.length, bLen);
-      return n;
-   }
-
-   private int nextByte() throws IOException {
-      if (nextByte >= bufferSz)
-         fill();
-      return buffer[nextByte++];
-   }
-
-   private void fill() throws IOException {
-      buffer = new byte[DEFAULT_BUFFER_SIZE+1]; // +1 for EOF mark
-      int n = in.read(buffer, 0, DEFAULT_BUFFER_SIZE);
+   private void fill(int len) throws IOException {
+      buffer = new byte[len+1]; // +1 for EOF mark
+      int n = in.read(buffer, 0, len);
       bufferSz = n > 0 ? n : 0;
       buffer[bufferSz] = -1;
       nextByte = 0;

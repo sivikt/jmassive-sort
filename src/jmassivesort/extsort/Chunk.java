@@ -25,8 +25,20 @@ import java.util.NoSuchElementException;
  */
 public class Chunk implements Iterable<Chunk.ChunkLine> {
 
+   public static class ChunkLine {
+      public final int offset;
+      public final int length;
+      public ChunkLine next;
+
+      public ChunkLine(int offset, int length) {
+         this.offset = offset;
+         this.length = length;
+      }
+   }
+
    private byte[] content;
    private ChunkLine head, tail;
+   private int size;
 
    public Chunk() {
       content = new byte[0];
@@ -60,17 +72,6 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       return new LinkedListIterator();
    }
 
-   public static class ChunkLine {
-      public final int offset;
-      public final int length;
-      public ChunkLine next;
-
-      public ChunkLine(int offset, int length) {
-         this.offset = offset;
-         this.length = length;
-      }
-   }
-
    public ChunkLine addLine(byte[] src) {
       byte[] n = new byte[content.length + src.length];
       System.arraycopy(content, 0, n, 0, content.length);
@@ -81,12 +82,31 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       tail = new ChunkLine(oldTail == null ? 0 : oldTail.offset + oldTail.length, src.length);
       if (head == null) head = tail;
       else      oldTail.next = tail;
+      size++;
 
       return head;
    }
 
    public byte[] getContent() {
       return content;
+   }
+
+   public int size() {
+      return size;
+   }
+
+   public ChunkLine[] getLines() {
+      ChunkLine[] lines = new ChunkLine[size];
+      ChunkLine next = head;
+      int i = 0;
+
+      while (next != null) {
+         lines[i] = next;
+         next = next.next;
+         i++;
+      }
+
+      return lines;
    }
 
    public ChunkLine addLine(int offset, int length) {
@@ -98,8 +118,8 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       return head;
    }
 
-   public void setContent(byte[] content) {
-      this.content = content;
+   public void setContent(byte[] c) {
+      this.content = c;
    }
 
 }

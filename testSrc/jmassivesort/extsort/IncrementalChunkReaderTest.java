@@ -1,4 +1,4 @@
-package jmassivesort.extsort; /**
+/**
  * Copyright 2013 Serj Sintsov <ssivikt@gmail.com></ssivikt@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@ package jmassivesort.extsort; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package jmassivesort.extsort;
 
 import org.testng.annotations.Test;
 
@@ -20,41 +21,42 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * @author Serj Sintsov
  */
-public class DiskChunkReaderTest {
+public class IncrementalChunkReaderTest {
 
    @Test
    public void test() throws IOException {
-      File src = new File("testSrc/resources/inputHuge.txt");
+      File src = new File("testSrc/resources/test5.txt");
       BufferedReader rd = new BufferedReader(new FileReader(src));
       int numChunks = 36;
 
       double[] times = new double[5];
 
-      for (int k = 0; k < 5; k++) {
+      for (int k = 0; k < 1; k++) {
          long fullStart = System.currentTimeMillis();
 
          for (int i = 1; i <= numChunks; i++) {
-            DiskChunkReader reader = new DiskChunkReader(i, numChunks, src);
+            IncrementalChunkReader reader = new IncrementalChunkReader(i, numChunks, src);
             Chunk chunk = reader.readChunk();
 
 
-   //         System.out.println(">>> chunk " + i + " content");
-   //         int j = 0;
-   //         for (Chunk.ChunkLine line : chunk) {
-   //            j++;
-   //
-   //            String str = new String(chunk.getContent(), line.offset, line.length, Charset.defaultCharset());
-   //            System.out.println(str);
-   //
-   //            if (!rd.readLine().equals(str))
-   //               throw new IllegalStateException("Incorrect line at pos " + j + ", chunk " + i);
-   //         }
-   //         System.out.println("<<< chunk " + i + " content");
-   //         System.out.println();
+            System.out.println(">>> chunk " + i + " content");
+            int j = 0;
+            for (Chunk.ChunkLine line : chunk) {
+               j++;
+
+               String str = new String(chunk.getContent(), line.offset, line.length, Charset.defaultCharset());
+               System.out.println(str);
+
+               if (!rd.readLine().equals(str))
+                  throw new IllegalStateException("Incorrect line at pos " + j + ", chunk " + i);
+            }
+            System.out.println("<<< chunk " + i + " content");
+            System.out.println();
          }
 
          long fullEnd = System.currentTimeMillis();

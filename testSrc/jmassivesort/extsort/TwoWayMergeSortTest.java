@@ -1,4 +1,4 @@
-package jmassivesort.extsort; /**
+/**
  * Copyright 2013 Serj Sintsov <ssivikt@gmail.com></ssivikt@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@ package jmassivesort.extsort; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package jmassivesort.extsort;
 
 import jmassivesort.JMassiveSort;
 import org.testng.annotations.Test;

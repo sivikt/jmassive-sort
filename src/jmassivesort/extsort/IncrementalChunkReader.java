@@ -1,18 +1,18 @@
 /**
-* Copyright 2013 Serj Sintsov <ssivikt@gmail.com></ssivikt@gmail.com>
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2013 Serj Sintsov <ssivikt@gmail.com></ssivikt@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jmassivesort.extsort;
 
 import java.io.*;
@@ -20,11 +20,11 @@ import java.io.*;
 import static jmassivesort.extsort.IOUtils.closeSilently;
 
 /**
-*
-* todo javadoc
-* @author Serj Sintsov
-*/
-public class DiskChunkReader implements Closeable {
+ *
+ * todo javadoc
+ * @author Serj Sintsov
+ */
+public class IncrementalChunkReader implements Closeable {
 
    private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024; // 1Mb
    private static final int CHUNK_OVERHEAD_SIZE = 1 * 1024 * 1024; // 1Mb
@@ -40,7 +40,7 @@ public class DiskChunkReader implements Closeable {
    private File src;
    private InputStream in;
 
-   public DiskChunkReader(int chunkId, int numChunks, File src) {
+   public IncrementalChunkReader(int chunkId, int numChunks, File src) {
       // keep chunk size equals to the closest integer number which
       // is bigger then the decimal chunk size number (e.g. 1.2 -> 2)
       chunkSz  = (long) Math.ceil((double) src.length() / numChunks);
@@ -73,11 +73,6 @@ public class DiskChunkReader implements Closeable {
       DebugUtils.stopTimer();
       DebugUtils.endFunc("read chunk lines (" + nBytes + " bytes)");
       DebugUtils.newLine();
-
-      in = createInputStream(src, realOffset);
-      byte[] content = new byte[nBytes];
-      in.read(content, 0 , nBytes);
-      chunk.setContent(content);
 
       return chunk;
    }
@@ -159,8 +154,8 @@ public class DiskChunkReader implements Closeable {
       int b;
       int oldB;
       int lineTailLen = 0;
-      int lineLen     = 0;
       int nextLineOff = nextByte;
+      byte[] lineBuf  = new byte[0];
 
       for (;;) {
          b = nextByte();
@@ -168,20 +163,19 @@ public class DiskChunkReader implements Closeable {
          lineTailLen++;
 
          if (b == -1) { // EOF
-            lineLen += lineTailLen-1;
+            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen-1);
             nBytes--;
 
-            if (lineLen <= 0)
+            if (lineBuf.length <= 0)
                return null;
             else
-               return chunk.addLine(nBytes - lineLen, lineLen);
+               return chunk.addLine(lineBuf);
          }
          else if (isCR(b) || isLF(b)) { // EOL
-            int strEnd = nBytes-1;
-            lineLen += lineTailLen-1;
+            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen-1);
 
             if (nBytes > chunkSz)
-               return chunk.addLine(strEnd - lineLen, lineLen);
+               return chunk.addLine(lineBuf);
 
             oldB = b;
             b = nextByte();
@@ -190,7 +184,7 @@ public class DiskChunkReader implements Closeable {
             else                                      // in that case back byte to buf
                nBytes++;                              // or skip it
 
-            return chunk.addLine(strEnd - lineLen, lineLen);
+            return chunk.addLine(lineBuf);
          }
 
          if (nBytes == chunkSz) {
@@ -200,11 +194,11 @@ public class DiskChunkReader implements Closeable {
                continue;
             }
 
-            lineLen += lineTailLen;
-            if (lineLen == 0)
+            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen);
+            if (lineBuf.length == 0)
                return null;
             else
-               return chunk.addLine(nBytes - lineLen, lineLen);
+               return chunk.addLine(lineBuf);
          }
          else if (nBytes == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
             b = nextByte();                                    // than the official size
@@ -213,15 +207,15 @@ public class DiskChunkReader implements Closeable {
             else
                nextByte--;
 
-            lineLen += lineTailLen;
-            if (lineLen == 0)
+            lineBuf = concat(lineBuf, buffer, nextLineOff, lineTailLen);
+            if (lineBuf.length == 0)
                return null;
             else
-               return chunk.addLine(nBytes - lineLen, lineLen);
+               return chunk.addLine(lineBuf);
          }
 
          if (nextByte == bufferSz) {
-            lineLen    += bufferSz - nextLineOff;
+            lineBuf = concat(lineBuf, buffer, nextLineOff, bufferSz-nextLineOff);
             lineTailLen = 0;
             nextLineOff = 0;
          }
@@ -242,6 +236,13 @@ public class DiskChunkReader implements Closeable {
 
    private boolean isLFCR(int c1, int c2) {
       return c1 == '\n' && c2 == '\r';
+   }
+
+   private byte[] concat(byte[] a, byte[] b, int bOff, int bLen) {
+      byte[] n = new byte[a.length + bLen];
+      System.arraycopy(a, 0, n, 0, a.length);
+      System.arraycopy(b, bOff, n, a.length, bLen);
+      return n;
    }
 
    private int nextByte() throws IOException {

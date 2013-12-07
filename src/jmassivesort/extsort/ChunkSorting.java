@@ -16,13 +16,12 @@
 package jmassivesort.extsort;
 
 import jmassivesort.SortingAlgorithmException;
+import sun.security.action.GetPropertyAction;
 
 import static jmassivesort.extsort.IOUtils.closeSilently;
-import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+
+import java.io.*;
+import java.security.AccessController;
 
 /**
  * Sorts a part of the input file.
@@ -41,9 +40,9 @@ public class ChunkSorting extends AbstractAlgorithm {
 
    @Override
    public void apply() throws SortingAlgorithmException {
-      readChunk();
-      //sort(lines);
-      //saveChunk(lines);
+      Chunk ch = readChunk();
+      Chunk.ChunkLine[] lines = sort(ch);
+      saveChunk(ch, lines);
    }
 
    private Chunk readChunk() {
@@ -65,31 +64,49 @@ public class ChunkSorting extends AbstractAlgorithm {
       }
    }
 
-   /**
-    * Uses quick-sort
-    */
-   private void sort(String[] lines) {
+   private void saveChunk(Chunk ch, Chunk.ChunkLine[] lines) {
+      String lineSeparator = AccessController.doPrivileged(new GetPropertyAction("line.separator"));
 
-   }
-
-   private void saveChunk(String[] lines) {
       File outFile = createNewFile(options.getChunkId() + ".txt");
-      BufferedWriter outWr = null;
+      OutputStream out = null;
 
       try {
-         outWr = new BufferedWriter(new FileWriter(outFile));
+         out = new FileOutputStream(outFile);
          for (int i = 0; i < lines.length; i++) {
-            outWr.write(lines[i]);
+            out.write(ch.getContent(), lines[i].offset, lines[i].length);
             if (i < lines.length-1)
-               outWr.newLine();
+               out.write(lineSeparator.getBytes());
          }
       }
       catch (IOException e) {
          throw new SortingAlgorithmException("Cannot write to file '" + outFile.getAbsolutePath() + "'", e);
       }
       finally {
-         closeSilently(outWr);
+         closeSilently(out);
       }
+   }
+
+   /**
+    * Uses quick-sort
+    */
+   private Chunk.ChunkLine[] sort(Chunk ch) {
+
+      return null;
+   }
+
+   private int compare(byte[] c, Chunk.ChunkLine ln1, Chunk.ChunkLine ln2) {
+      int i = ln1.offset;
+      int j = ln2.offset;
+
+      while ((i < ln1.offset+ln1.length) && (j < ln2.offset+ln2.length)) {
+         if (c[i] != c[j])
+            return c[i] - c[j];
+         else {
+            i++; j++;
+         }
+      }
+
+      return ln1.length - ln2.length;
    }
 
 }
