@@ -128,10 +128,10 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private int compare(byte[] c, Chunk.ChunkLine ln1, Chunk.ChunkLine ln2) {
-      int i = ln1.offset;
-      int j = ln2.offset;
+      int i = ln1.off;
+      int j = ln2.off;
 
-      while ((i < ln1.offset+ln1.length) && (j < ln2.offset+ln2.length)) {
+      while ((i < ln1.off +ln1.len) && (j < ln2.off +ln2.len)) {
          if (c[i] != c[j])
             return c[i] - c[j];
          else {
@@ -139,7 +139,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          }
       }
 
-      return ln1.length - ln2.length;
+      return ln1.len - ln2.len;
    }
 
 }

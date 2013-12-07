@@ -37,11 +37,11 @@ public class Debugger {
    }
 
    public void startFunc(String msg, Object... params) {
-      log(prefixOut() + String.format(msg, params));
+      log(prefixIn() + String.format(msg, params));
    }
 
    public void endFunc(String msg, Object... params) {
-      log(prefixIn() + String.format(msg, params));
+      log(prefixOut() + String.format(msg, params));
    }
 
    public void newLine() {

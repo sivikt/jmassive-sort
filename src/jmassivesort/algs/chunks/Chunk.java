@@ -26,13 +26,13 @@ import java.util.NoSuchElementException;
 public class Chunk implements Iterable<Chunk.ChunkLine> {
 
    public static class ChunkLine {
-      public final int offset;
-      public final int length;
+      public final int off;
+      public final int len;
       public ChunkLine next;
 
       public ChunkLine(int offset, int length) {
-         this.offset = offset;
-         this.length = length;
+         this.off = offset;
+         this.len = length;
       }
    }
 

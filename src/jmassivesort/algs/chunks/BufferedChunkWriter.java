@@ -48,9 +48,9 @@ public class BufferedChunkWriter implements Closeable {
       byte[] buffer = new byte[MAX_BUFFER_SZ];
 
       for (Chunk.ChunkLine line : lines) {
-         if (bufferSz + lines.length + lns.length < MAX_BUFFER_SZ) {
-            System.arraycopy(chunk, line.offset, buffer, bufferSz, line.length);
-            bufferSz += lines.length;
+         if (bufferSz + line.len + lns.length < MAX_BUFFER_SZ) {
+            System.arraycopy(chunk, line.off, buffer, bufferSz, line.len);
+            bufferSz += line.len;
             System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
             bufferSz += lns.length;
          }

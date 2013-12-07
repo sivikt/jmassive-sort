@@ -52,7 +52,7 @@ public class InMemoryChunkReaderTest {
 //            for (Chunk.ChunkLine line : chunk) {
 //               j++;
 //
-//               String str = new String(chunk.getContent(), line.offset, line.length, Charset.defaultCharset());
+//               String str = new String(chunk.getContent(), line.offset, line.len, Charset.defaultCharset());
 //               System.out.println(str);
 //
 //               if (!rd.readLine().equals(str))

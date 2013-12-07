@@ -31,7 +31,8 @@ public class ChunkMerging extends AbstractAlgorithm {
    private ChunkMergingOptions options;
 
    public ChunkMerging(ChunkMergingOptions options) {
-      if  (options == null) throw new IllegalArgumentException("options cannot be null");
+      if  (options == null)
+         throw new IllegalArgumentException("options cannot be null");
       this.options = options;
    }
 
