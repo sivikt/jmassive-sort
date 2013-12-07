@@ -16,6 +16,7 @@
 package jmassivesort;
 
 import jmassivesort.algs.SortingAlgorithmBuilder;
+import jmassivesort.algs.chunks.ChunkMergingOptions;
 import jmassivesort.algs.chunks.ChunkSortingOptions;
 import jmassivesort.algs.mergesort.TwoWayMergeSortOptions;
 
@@ -31,6 +32,7 @@ public class JMassiveSort {
 
    private static final String TWO_WAY_MERGESORT_NAME = "2way-mergesort";
    private static final String CHUNK_SORTING = "chunk-sorting";
+   private static final String CHUNK_MERGING = "chunk-merging";
 
    private static final Map<String, SortingAlgorithmBuilder> algorithms;
    private static final Map<String, String> optionDescriptions;
@@ -42,6 +44,7 @@ public class JMassiveSort {
       algorithms = new HashMap<String, SortingAlgorithmBuilder>() {{
          put(TWO_WAY_MERGESORT_NAME, TwoWayMergeSortOptions.algorithmBuilder());
          put(CHUNK_SORTING, ChunkSortingOptions.algorithmBuilder());
+         put(CHUNK_MERGING, ChunkMergingOptions.algorithmBuilder());
       }};
 
       optionDescriptions = new HashMap<String, String>() {{
