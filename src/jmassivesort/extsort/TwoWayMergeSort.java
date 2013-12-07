@@ -17,7 +17,7 @@ package jmassivesort.extsort;
 
 import jmassivesort.SortingAlgorithmException;
 
-import static jmassivesort.extsort.IOUtils.closeSilently;
+import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
@@ -63,19 +63,13 @@ public class TwoWayMergeSort extends AbstractAlgorithm {
 
    private void sort(File src, File out, File leftBuffer, File rightBuffer) throws IOException {
       long i = 1;
-      debug("pick series size " + i);
       long N = fillBuffersAndCount(i, src, leftBuffer, rightBuffer);
-      debug("merge series size " + i);
       mergeBuffers(i, out, leftBuffer, rightBuffer);
 
       while ((i *= 2) < N) {
-         debug("pick series size " + i);
          fillBuffers(i, out, leftBuffer, rightBuffer);
-         debug("merge series size " + i);
          mergeBuffers(i, out, leftBuffer, rightBuffer);
       }
-
-      debug("items number " + N);
    }
 
    private void mergeBuffers(long seriesSz, File out, File leftBuffer, File rightBuffer) throws IOException {

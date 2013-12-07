@@ -114,6 +114,7 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       tail = new ChunkLine(offset, length);
       if (head == null) head = tail;
       else      oldTail.next = tail;
+      size++;
 
       return head;
    }

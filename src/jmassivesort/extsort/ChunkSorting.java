@@ -16,9 +16,10 @@
 package jmassivesort.extsort;
 
 import jmassivesort.SortingAlgorithmException;
+import jmassivesort.util.Debugger;
 import sun.security.action.GetPropertyAction;
 
-import static jmassivesort.extsort.IOUtils.closeSilently;
+import static jmassivesort.util.IOUtils.closeSilently;
 
 import java.io.*;
 import java.security.AccessController;
@@ -31,6 +32,8 @@ import java.security.AccessController;
  */
 public class ChunkSorting extends AbstractAlgorithm {
 
+   private final Debugger dbg = Debugger.create(getClass());
+
    private ChunkSortingOptions options;
 
    public ChunkSorting(ChunkSortingOptions options) {
@@ -41,8 +44,18 @@ public class ChunkSorting extends AbstractAlgorithm {
    @Override
    public void apply() throws SortingAlgorithmException {
       Chunk ch = readChunk();
+
+      dbg.startFunc("sort");
+      dbg.startTimer();
       Chunk.ChunkLine[] lines = sort(ch);
+      dbg.stopTimer();
+      dbg.endFunc("sort");
+
+      dbg.startFunc("write to disk");
+      dbg.startTimer();
       saveChunk(ch, lines);
+      dbg.stopTimer();
+      dbg.endFunc("write to disk");
    }
 
    private Chunk readChunk() {
@@ -87,11 +100,39 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    /**
-    * Uses quick-sort
+    *
     */
    private Chunk.ChunkLine[] sort(Chunk ch) {
+      Chunk.ChunkLine[] lines = ch.getLines();
+      quicksort(ch, lines, 0, lines.length - 1);
+      return lines;
+   }
 
-      return null;
+   private void quicksort(Chunk ch, Chunk.ChunkLine[] a, int low, int high) {
+      int i = low, j = high;
+      Chunk.ChunkLine pivot = a[low + (high-low)/2];
+
+      while (i <= j) {
+         while (compare(ch.getContent(), a[i], pivot) < 0) i++;
+         while (compare(ch.getContent(), a[j], pivot) > 0) j--;
+
+         if (i <= j) {
+            exchange(a, i, j);
+            i++;
+            j--;
+         }
+      }
+
+      if (low < j)
+         quicksort(ch, a, low, j);
+      if (i < high)
+         quicksort(ch, a, i, high);
+   }
+
+   private void exchange(Chunk.ChunkLine[] lines, int i, int j) {
+      Chunk.ChunkLine temp = lines[i];
+      lines[i] = lines[j];
+      lines[j] = temp;
    }
 
    private int compare(byte[] c, Chunk.ChunkLine ln1, Chunk.ChunkLine ln2) {

@@ -37,8 +37,4 @@ public abstract class AbstractAlgorithm implements SortingAlgorithm {
       }
    }
 
-   protected void debug(String msg, Object... params) {
-      System.out.println(">>> debug: " + String.format(msg, params));
-   }
-
 }

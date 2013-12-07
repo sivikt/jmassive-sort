@@ -15,8 +15,12 @@
  */
 package jmassivesort.extsort;
 
+import jmassivesort.JMassiveSort;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 /**
@@ -24,9 +28,24 @@ import java.io.IOException;
  */
 public class ChunkSortingTest {
 
-   @Test
-   public void test() throws IOException {
 
+   public static void main(String[] args) throws IOException {
+      long start = System.currentTimeMillis();
+      JMassiveSort.main(new String[]{"chunk-sorting", "1", "36", "testSrc/resources/inputHuge.txt"});
+      long end = System.currentTimeMillis();
+
+      System.out.println("Sorted in " + (double)(end - start)/1000 + " s");
+
+      File output = new File("1.txt");
+      assert output.exists() && output.isFile();
+
+      BufferedReader br = new BufferedReader(new FileReader(output));
+
+      String key = br.readLine();
+      if (key == null) {
+         System.out.println("Output file is empty");
+         return;
+      }
    }
 
 }

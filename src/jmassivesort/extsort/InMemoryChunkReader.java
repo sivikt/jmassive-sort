@@ -15,7 +15,9 @@
  */
 package jmassivesort.extsort;
 
-import static jmassivesort.extsort.IOUtils.closeSilently;
+import jmassivesort.util.Debugger;
+
+import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.*;
 
 /**
@@ -24,6 +26,8 @@ import java.io.*;
  * @author Serj Sintsov
  */
 public class InMemoryChunkReader implements Closeable {
+
+   private final Debugger dbg = Debugger.create(getClass());
 
    private static final int CHUNK_OVERHEAD_SIZE = 1 * 1024 * 1024; // 1Mb
    private static final int MAX_CHUNK_SIZE      = Integer.MAX_VALUE - CHUNK_OVERHEAD_SIZE - 1;
@@ -63,17 +67,17 @@ public class InMemoryChunkReader implements Closeable {
 
       Chunk chunk = new Chunk();
 
-      DebugUtils.startFunc("read chunk lines");
-      DebugUtils.startTimer();
+      dbg.startFunc("read chunk lines");
+      dbg.startTimer();
 
       for (;;)
          if (readLine(chunk) == null) break;
 
       chunk.setContent(buffer);
 
-      DebugUtils.stopTimer();
-      DebugUtils.endFunc("read chunk lines (" + nextByte + " bytes)");
-      DebugUtils.newLine();
+      dbg.stopTimer();
+      dbg.endFunc("read chunk lines (" + nextByte + " bytes)");
+      dbg.newLine();
 
       return chunk;
    }
@@ -91,8 +95,8 @@ public class InMemoryChunkReader implements Closeable {
    }
 
    private long calcOffset(long chunkOff, long chunkSz, File f) throws IOException {
-      DebugUtils.startFunc("calc chunk offset");
-      DebugUtils.startTimer();
+      dbg.startFunc("calc chunk offset");
+      dbg.startTimer();
 
       InputStream in = new FileInputStream(f);
 
@@ -114,8 +118,8 @@ public class InMemoryChunkReader implements Closeable {
                realOff++;
 
                if (b == -1) {
-                  DebugUtils.stopTimer();
-                  DebugUtils.endFunc("calc chunk offset");
+                  dbg.stopTimer();
+                  dbg.endFunc("calc chunk offset");
                   return realOff;
                }
                else if (isCR(b) || isLF(b)) {
@@ -132,8 +136,8 @@ public class InMemoryChunkReader implements Closeable {
             }
          }
 
-         DebugUtils.stopTimer();
-         DebugUtils.endFunc("calc chunk offset");
+         dbg.stopTimer();
+         dbg.endFunc("calc chunk offset");
 
          return realOff;
       }

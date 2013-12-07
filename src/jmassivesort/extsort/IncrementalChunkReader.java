@@ -15,9 +15,11 @@
  */
 package jmassivesort.extsort;
 
+import jmassivesort.util.Debugger;
+
 import java.io.*;
 
-import static jmassivesort.extsort.IOUtils.closeSilently;
+import static jmassivesort.util.IOUtils.closeSilently;
 
 /**
  *
@@ -25,6 +27,8 @@ import static jmassivesort.extsort.IOUtils.closeSilently;
  * @author Serj Sintsov
  */
 public class IncrementalChunkReader implements Closeable {
+
+   private final Debugger dbg = Debugger.create(getClass());
 
    private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024; // 1Mb
    private static final int CHUNK_OVERHEAD_SIZE = 1 * 1024 * 1024; // 1Mb
@@ -64,15 +68,15 @@ public class IncrementalChunkReader implements Closeable {
       in = createInputStream(src, realOffset);
       Chunk chunk = new Chunk();
 
-      DebugUtils.startFunc("read chunk lines");
-      DebugUtils.startTimer();
+      dbg.startFunc("read chunk lines");
+      dbg.startTimer();
 
       for (;;)
          if (readLine(chunk) == null) break;
 
-      DebugUtils.stopTimer();
-      DebugUtils.endFunc("read chunk lines (" + nBytes + " bytes)");
-      DebugUtils.newLine();
+      dbg.stopTimer();
+      dbg.endFunc("read chunk lines (" + nBytes + " bytes)");
+      dbg.newLine();
 
       return chunk;
    }
@@ -90,15 +94,15 @@ public class IncrementalChunkReader implements Closeable {
    }
 
    private long calcOffset(long chunkOff, long chunkSz, File f) throws IOException {
-      DebugUtils.startFunc("calc chunk offset");
-      DebugUtils.startTimer();
+      dbg.startFunc("calc chunk offset");
+      dbg.startTimer();
 
       InputStream in = new FileInputStream(f);
 
       try {
          if (chunkOff == 0) { // don't skip bytes for the first chunk
-            DebugUtils.stopTimer();
-            DebugUtils.endFunc("calc chunk offset");
+            dbg.stopTimer();
+            dbg.endFunc("calc chunk offset");
             return chunkOff;
          }
 
@@ -119,8 +123,8 @@ public class IncrementalChunkReader implements Closeable {
                realOff++;
 
                if (b == -1) {
-                  DebugUtils.stopTimer();
-                  DebugUtils.endFunc("calc chunk offset");
+                  dbg.stopTimer();
+                  dbg.endFunc("calc chunk offset");
                   return realOff;
                }
                else if (isCR(b) || isLF(b)) {
@@ -137,8 +141,8 @@ public class IncrementalChunkReader implements Closeable {
             }
          }
 
-         DebugUtils.stopTimer();
-         DebugUtils.endFunc("calc chunk offset");
+         dbg.stopTimer();
+         dbg.endFunc("calc chunk offset");
 
          return realOff;
       }
