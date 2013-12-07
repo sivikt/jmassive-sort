@@ -72,23 +72,12 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       return new LinkedListIterator();
    }
 
-   public ChunkLine addLine(byte[] src) {
-      byte[] n = new byte[content.length + src.length];
-      System.arraycopy(content, 0, n, 0, content.length);
-      System.arraycopy(src, 0, n, content.length, src.length);
-      content = n;
-
-      ChunkLine oldTail = tail;
-      tail = new ChunkLine(oldTail == null ? 0 : oldTail.offset + oldTail.length, src.length);
-      if (head == null) head = tail;
-      else      oldTail.next = tail;
-      size++;
-
-      return head;
-   }
-
    public byte[] getContent() {
       return content;
+   }
+
+   public void setContent(byte[] c) {
+      this.content = c;
    }
 
    public int size() {
@@ -117,10 +106,6 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       size++;
 
       return head;
-   }
-
-   public void setContent(byte[] c) {
-      this.content = c;
    }
 
 }

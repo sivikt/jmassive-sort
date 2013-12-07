@@ -18,12 +18,10 @@ package jmassivesort.algs.chunks;
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.algs.AbstractAlgorithm;
 import jmassivesort.util.Debugger;
-import sun.security.action.GetPropertyAction;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 
 import java.io.*;
-import java.security.AccessController;
 
 /**
  * Sorts a specified part of the input file.
@@ -81,35 +79,18 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private void saveChunk(Chunk ch, Chunk.ChunkLine[] lines) {
-      final int MAX_BUFFER_SZ = 10 * 1024 * 1024; // 10Mb
-      int bufferSz = 0;
-      byte[] buffer = new byte[MAX_BUFFER_SZ];
-      byte[] lns = AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes();
-
       File outFile = createNewFile(options.getChunkId() + ".txt");
-      OutputStream out = null;
+      BufferedChunkWriter chWr = null;
 
       try {
-         out = new FileOutputStream(outFile);
-         for (int i = 0; i < lines.length; i++) {
-            if (bufferSz + lines[i].length + lns.length < MAX_BUFFER_SZ) {
-               System.arraycopy(ch.getContent(), lines[i].offset, buffer, bufferSz, lines[i].length);
-               bufferSz += lines[i].length;
-               System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
-               bufferSz += lns.length;
-            }
-            else {
-               out.write(buffer, 0, bufferSz);
-               buffer = new byte[MAX_BUFFER_SZ];
-               bufferSz = 0;
-            }
-         }
+         chWr = new BufferedChunkWriter(outFile);
+         chWr.write(ch.getContent(), lines);
       }
       catch (IOException e) {
          throw new SortingAlgorithmException("Cannot write to file '" + outFile.getAbsolutePath() + "'", e);
       }
       finally {
-         closeSilently(out);
+         closeSilently(chWr);
       }
    }
 

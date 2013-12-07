@@ -86,6 +86,7 @@ public class InMemoryChunkReader implements Closeable {
       return chunk;
    }
 
+   @SuppressWarnings("ResultOfMethodCallIgnored")
    private InputStream createInputStream(File f, long offset) throws IOException {
       InputStream in = new FileInputStream(f);
       try {
@@ -98,6 +99,7 @@ public class InMemoryChunkReader implements Closeable {
       }
    }
 
+   @SuppressWarnings("ResultOfMethodCallIgnored")
    private long calcOffset(long chunkOff, long chunkSz, File f) throws IOException {
       dbg.startFunc("calc chunk offset");
       dbg.startTimer();
@@ -108,14 +110,14 @@ public class InMemoryChunkReader implements Closeable {
          long realOff = 0;
          int b;
          int oldB;
-         int delta = 0;
+         long nSkip = chunkSz-1;
          long jumps = chunkOff;
 
          while (jumps > 0) {
-            in.skip(chunkSz-1 - delta);
+            realOff += nSkip;
             jumps -= chunkSz;
-            realOff += chunkSz-1;
-            delta = 0;
+            in.skip(nSkip);
+            nSkip = chunkSz-1;
 
             for (;;) {
                b = in.read();
@@ -131,7 +133,7 @@ public class InMemoryChunkReader implements Closeable {
                   b = in.read();
 
                   if (!isCRLF(oldB, b) && !isLFCR(oldB, b))
-                     delta = 1;
+                     nSkip--;
                   else
                      realOff++;
 
