@@ -81,7 +81,10 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private void saveChunk(Chunk ch, Chunk.ChunkLine[] lines) {
-      String lineSeparator = AccessController.doPrivileged(new GetPropertyAction("line.separator"));
+      final int MAX_BUFFER_SZ = 10 * 1024 * 1024; // 10Mb
+      int bufferSz = 0;
+      byte[] buffer = new byte[MAX_BUFFER_SZ];
+      byte[] lns = AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes();
 
       File outFile = createNewFile(options.getChunkId() + ".txt");
       OutputStream out = null;
@@ -89,9 +92,17 @@ public class ChunkSorting extends AbstractAlgorithm {
       try {
          out = new FileOutputStream(outFile);
          for (int i = 0; i < lines.length; i++) {
-            out.write(ch.getContent(), lines[i].offset, lines[i].length);
-            if (i < lines.length-1)
-               out.write(lineSeparator.getBytes());
+            if (bufferSz + lines[i].length + lns.length < MAX_BUFFER_SZ) {
+               System.arraycopy(ch.getContent(), lines[i].offset, buffer, bufferSz, lines[i].length);
+               bufferSz += lines[i].length;
+               System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
+               bufferSz += lns.length;
+            }
+            else {
+               out.write(buffer, 0, bufferSz);
+               buffer = new byte[MAX_BUFFER_SZ];
+               bufferSz = 0;
+            }
          }
       }
       catch (IOException e) {

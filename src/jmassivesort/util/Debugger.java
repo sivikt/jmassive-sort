@@ -49,6 +49,7 @@ public class Debugger {
    }
 
    public void startTimer() {
+      startTime = System.currentTimeMillis();
       log(prefix() + "start timer");
    }
 
