@@ -15,8 +15,9 @@
  */
 package jmassivesort;
 
-import jmassivesort.extsort.ChunkSortingOptions;
-import jmassivesort.extsort.TwoWayMergeSortOptions;
+import jmassivesort.algs.SortingAlgorithmBuilder;
+import jmassivesort.algs.chunks.ChunkSortingOptions;
+import jmassivesort.algs.mergesort.TwoWayMergeSortOptions;
 
 import java.util.Arrays;
 import java.util.HashMap;

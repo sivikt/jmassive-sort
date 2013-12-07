@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs.chunks;
 
+import jmassivesort.algs.chunks.Chunk;
+import jmassivesort.algs.chunks.IncrementalChunkReader;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;

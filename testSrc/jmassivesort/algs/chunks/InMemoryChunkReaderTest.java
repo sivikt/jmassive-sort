@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs.chunks;
 
-import org.testng.annotations.Test;
+import jmassivesort.algs.chunks.Chunk;
+import jmassivesort.algs.chunks.InMemoryChunkReader;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  * @author Serj Sintsov

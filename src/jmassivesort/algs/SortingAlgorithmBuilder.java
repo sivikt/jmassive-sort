@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs;
 
-import jmassivesort.SortingAlgorithm;
-import jmassivesort.SortingAlgorithmException;
-
-import java.io.File;
-import java.io.IOException;
+import jmassivesort.CliOptionsBuilderException;
 
 /**
  * todo javadoc
  * @author Serj Sintsov
  */
-public abstract class AbstractAlgorithm implements SortingAlgorithm {
-
-   protected File createNewFile(String path) {
-      File newFile = new File(path);
-      try {
-         if (newFile.createNewFile()) return newFile;
-         else throw new SortingAlgorithmException("File '" + path + "' already exists");
-      } catch (IOException e) {
-         throw new SortingAlgorithmException("Creation of file '" + path + "' is failed due to the error", e);
-      }
-   }
-
+public interface SortingAlgorithmBuilder {
+   
+   SortingAlgorithm build(String[] options) throws CliOptionsBuilderException;
+   
 }

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs.mergesort;
 
-import jmassivesort.SortingAlgorithmException;
+import jmassivesort.algs.SortingAlgorithmException;
+import jmassivesort.algs.AbstractAlgorithm;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.File;

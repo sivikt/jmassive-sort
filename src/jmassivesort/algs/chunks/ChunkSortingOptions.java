@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs.chunks;
 
 import jmassivesort.CliOptionsBuilderException;
-import jmassivesort.SortingAlgorithm;
-import jmassivesort.SortingAlgorithmBuilder;
+import jmassivesort.algs.SortingAlgorithm;
+import jmassivesort.algs.SortingAlgorithmBuilder;
 
 import java.io.File;
 import java.util.HashMap;

@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort;
+package jmassivesort.algs;
 
 /**
  * todo javadoc
  * @author Serj Sintsov
  */
-public interface SortingAlgorithm {
+public class SortingAlgorithmException extends RuntimeException {
 
-   void apply() throws SortingAlgorithmException;
+   public SortingAlgorithmException(String error) {
+      super(error);
+   }
+
+   public SortingAlgorithmException(String error, Throwable cause) {
+      super(error, cause);
+   }
 
 }

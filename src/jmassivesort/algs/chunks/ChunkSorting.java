@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort.extsort;
+package jmassivesort.algs.chunks;
 
-import jmassivesort.SortingAlgorithmException;
+import jmassivesort.algs.SortingAlgorithmException;
+import jmassivesort.algs.AbstractAlgorithm;
 import jmassivesort.util.Debugger;
 import sun.security.action.GetPropertyAction;
 

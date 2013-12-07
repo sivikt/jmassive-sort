@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jmassivesort;
+package jmassivesort.algs;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * todo javadoc
  * @author Serj Sintsov
  */
-public class SortingAlgorithmException extends RuntimeException {
+public abstract class AbstractAlgorithm implements SortingAlgorithm {
 
-   public SortingAlgorithmException(String error) {
-      super(error);
-   }
-
-   public SortingAlgorithmException(String error, Throwable cause) {
-      super(error, cause);
+   protected File createNewFile(String path) {
+      File newFile = new File(path);
+      try {
+         if (newFile.createNewFile()) return newFile;
+         else throw new SortingAlgorithmException("File '" + path + "' already exists");
+      } catch (IOException e) {
+         throw new SortingAlgorithmException("Creation of file '" + path + "' is failed due to the error", e);
+      }
    }
 
 }
