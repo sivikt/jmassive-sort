@@ -24,7 +24,6 @@ import static jmassivesort.util.IOUtils.closeSilently;
 
 import java.io.*;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Sorts a specified part of the input file.
@@ -38,62 +37,83 @@ public class ChunkSorting extends AbstractAlgorithm {
 
    private final Debugger dbg = Debugger.create(getClass());
 
-   private ChunkSortingOptions options;
+   private ChunkSortingOptions opts;
 
    public ChunkSorting(ChunkSortingOptions options) {
-      if  (options == null) throw new IllegalArgumentException("options cannot be null");
-      this.options = options;
+      if  (options == null)
+         throw new IllegalArgumentException("options cannot be null");
+      this.opts = options;
    }
 
    @Override
    public void apply() throws SortingAlgorithmException {
+      dbg.startFunc("apply");
+      dbg.startTimer();
+      dbg.markFreeMemory();
+
       Chunk ch = readChunk();
+      sort(ch);
+      saveChunk(ch);
 
-      dbg.startFunc("sort");
-      dbg.startTimer();
-      List<Chunk.ChunkLine> lines = sort(ch);
+      dbg.checkMemoryUsage();
       dbg.stopTimer();
-      dbg.endFunc("sort");
-
-      dbg.startFunc("write to disk");
-      dbg.startTimer();
-      saveChunk(ch, lines);
-      dbg.stopTimer();
-      dbg.endFunc("write to disk");
+      dbg.endFunc("apply");
    }
 
    private Chunk readChunk() {
-      File srcFile = new File(options.getInputFilePath());
+      File srcFile = new File(opts.getInputFilePath());
       InMemoryChunkReader cr = null;
 
       try {
-         cr = new InMemoryChunkReader(options.getChunkId(), options.getNumChunks(), srcFile);
-         return cr.readChunk();
+         dbg.startFunc("read chunk");
+         dbg.markFreeMemory();
+
+         cr = new InMemoryChunkReader(opts.getChunkId(), opts.getNumChunks(), srcFile);
+         Chunk chunk = cr.readChunk();
+
+         dbg.checkMemoryUsage();
+         dbg.endFunc("read chunk");
+
+         return chunk;
       }
       catch (FileNotFoundException e) {
-         throw new SortingAlgorithmException("Cannot find file '" + options.getInputFilePath() + "'", e);
+         throw new SortingAlgorithmException("Cannot find file '" + opts.getInputFilePath() + "'", e);
       }
       catch (IOException e) {
-         throw new SortingAlgorithmException("Cannot read file '" + options.getInputFilePath() + "'", e);
+         throw new SortingAlgorithmException("Cannot read file '" + opts.getInputFilePath() + "'", e);
       }
       finally {
          closeSilently(cr);
       }
    }
 
-   private List<Chunk.ChunkLine> sort(Chunk ch) {
-      List<Chunk.ChunkLine> lines = ch.getLinesList();
-      Collections.sort(lines, asc(ch));
-      return lines;
+   private void sort(Chunk ch) {
+      dbg.startFunc("sort");
+      dbg.markFreeMemory();
+      dbg.startTimer();
+
+      Collections.sort(ch.allMarkers(), asc(ch));
+
+      dbg.stopTimer();
+      dbg.checkMemoryUsage();
+      dbg.endFunc("sort");
    }
 
-   private void saveChunk(Chunk ch, List<Chunk.ChunkLine> lines) {
-      File outFile = createNewFile(options.getChunkId() + ".txt");
+   private void saveChunk(Chunk ch) {
+      File outFile = createNewFile(opts.getChunkId() + ".txt");
       BufferedChunkWriter chWr = null;
 
       try {
+         dbg.startFunc("write to disk");
+         dbg.markFreeMemory();
+         dbg.startTimer();
+
          chWr = new BufferedChunkWriter(outFile);
-         chWr.write(ch.getContent(), lines);
+         chWr.write(ch.rawData(), ch.allMarkers());
+
+         dbg.stopTimer();
+         dbg.checkMemoryUsage();
+         dbg.endFunc("write to disk");
       }
       catch (IOException e) {
          throw new SortingAlgorithmException("Cannot write to file '" + outFile.getAbsolutePath() + "'", e);

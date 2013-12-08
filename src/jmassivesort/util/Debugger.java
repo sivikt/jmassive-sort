@@ -16,6 +16,7 @@
 package jmassivesort.util;
 
 import java.io.*;
+import java.util.Stack;
 
 /**
  * todo javadoc
@@ -24,9 +25,9 @@ import java.io.*;
 public class Debugger {
 
    private Class clazz;
-   private long startTime = -1;
    private PrintStream wr = System.out;
-
+   private Stack<Long> memoryMarkers = new Stack<>();
+   private Stack<Long> timeMarkers = new Stack<>();
 
    private Debugger(Class clazz) {
       this.clazz = clazz;
@@ -48,14 +49,18 @@ public class Debugger {
       log(prefix());
    }
 
+   public void echo(String msg) {
+      log(prefix() + msg);
+   }
+
    public void startTimer() {
-      startTime = System.currentTimeMillis();
+      timeMarkers.push(System.currentTimeMillis());
       log(prefix() + "start timer");
    }
 
    public void stopTimer() {
       long end = System.currentTimeMillis();
-      log(prefix() + "stop timer in " + (double) (end - startTime) / 1000 + " s");
+      log(prefix() + "stop timer in " + (double) (end - timeMarkers.pop()) / 1000 + " s");
    }
 
    private String prefix() {
@@ -68,6 +73,30 @@ public class Debugger {
 
    private String prefixOut() {
       return prefix() + "<<< ";
+   }
+
+   private long calcFreeMemory() {
+      Runtime runtime = Runtime.getRuntime();
+      long totalMemory = runtime.totalMemory();
+      long freeMemory = runtime.freeMemory();
+      long maxMemory = runtime.maxMemory();
+      long usedMemory = totalMemory - freeMemory;
+      long availableMemory = maxMemory - usedMemory;
+      return availableMemory;
+   }
+
+   public void markFreeMemory() {
+      long memoryMarker = calcFreeMemory();
+      memoryMarkers.push(memoryMarker);
+      log(prefix() + "mark free memory on " + bytesAndMb(memoryMarker));
+   }
+
+   public void checkMemoryUsage() {
+      log(prefix() + "memory usage " + bytesAndMb(memoryMarkers.pop()-calcFreeMemory()));
+   }
+
+   private String bytesAndMb(long amount) {
+      return amount + " bytes (" + amount/1024/1024 + " Mb)";
    }
 
    private void log(String str) {

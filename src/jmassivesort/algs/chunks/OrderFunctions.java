@@ -24,7 +24,7 @@ import java.util.Comparator;
  */
 public class OrderFunctions {
 
-   private static final class AscComparator implements Comparator<Chunk.ChunkLine> {
+   private static final class AscComparator implements Comparator<Chunk.ChunkMarker> {
       private final Chunk ch;
 
       public AscComparator(Chunk ch) {
@@ -32,12 +32,12 @@ public class OrderFunctions {
       }
 
       @Override
-      public int compare(Chunk.ChunkLine o1, Chunk.ChunkLine o2) {
-         return o1.compareTo(ch.getContent(), o2);
+      public int compare(Chunk.ChunkMarker o1, Chunk.ChunkMarker o2) {
+         return o1.compareTo(ch.rawData(), o2);
       }
    }
 
-   public static Comparator<Chunk.ChunkLine> asc(Chunk ch) {
+   public static Comparator<Chunk.ChunkMarker> asc(Chunk ch) {
       return new AscComparator(ch);
    }
 

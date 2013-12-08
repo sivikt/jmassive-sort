@@ -18,6 +18,7 @@ package jmassivesort;
 import jmassivesort.algs.SortingAlgorithmBuilder;
 import jmassivesort.algs.chunks.ChunkMergingOptions;
 import jmassivesort.algs.chunks.ChunkSortingOptions;
+import static jmassivesort.JMassiveSortUsageFormatter.printUsage;
 import jmassivesort.algs.mergesort.TwoWayMergeSortOptions;
 
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class JMassiveSort {
 
    public static SortingAlgorithmBuilder chooseAlgorithm(String algorithmName) {
       if (!algorithms.containsKey(algorithmName)) {
-         JMassiveSortUsageFormatter.printUsage("unknown algorithm '" + algorithmName + "'", optionDescriptions);
+         printUsage("unknown algorithm '" + algorithmName + "'", optionDescriptions);
          System.exit(1);
       }
 
@@ -64,7 +65,7 @@ public class JMassiveSort {
 
    public static void buildOptions(String[] options) throws CliOptionsBuilderException {
       if (options.length == 0) {
-         JMassiveSortUsageFormatter.printUsage("specify options", optionDescriptions);
+         printUsage("specify options", optionDescriptions);
          System.exit(1);
       }
 
@@ -80,7 +81,7 @@ public class JMassiveSort {
          alg.build(algorithmOptions).apply();
       }
       catch (CliOptionsBuilderException e) {
-         JMassiveSortUsageFormatter.printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());
+         printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());
          System.exit(1);
       }
    }

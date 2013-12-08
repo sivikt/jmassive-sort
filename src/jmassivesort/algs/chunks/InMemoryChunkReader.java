@@ -60,28 +60,42 @@ public class InMemoryChunkReader implements Closeable {
    }
 
    public Chunk readChunk() throws IOException {
-      if (chunkOff == -1)
-         return new Chunk();
+      dbg.startFunc("readChunk");
+      dbg.markFreeMemory();
+      dbg.startTimer();
 
+      if (chunkOff == -1)
+         return new Chunk(new byte[0]);
+
+      dbg.startFunc("fill buffer");
+      dbg.markFreeMemory();
+      dbg.startTimer();
       long realOffset = calcOffset(chunkOff, chunkSz, src);
 
       in = createInputStream(src, realOffset);
 
       fill((int)chunkSz + CHUNK_OVERHEAD_SIZE + 1);
+      dbg.stopTimer();
+      dbg.checkMemoryUsage();
+      dbg.endFunc("fill buffer");
 
-      Chunk chunk = new Chunk();
+      Chunk chunk = new Chunk(buffer);
 
       dbg.startFunc("read chunk lines");
+      dbg.markFreeMemory();
       dbg.startTimer();
 
       for (;;)
          if (readLine(chunk) == null) break;
 
-      chunk.setContent(buffer);
+      dbg.stopTimer();
+      dbg.checkMemoryUsage();
+      dbg.endFunc("read chunk lines");
 
       dbg.stopTimer();
-      dbg.endFunc("read chunk lines (" + nextByte + " bytes)");
-      dbg.newLine();
+      dbg.checkMemoryUsage();
+      dbg.echo("total number of lines " + chunk.rawData().length + ". total data size " + nextByte + " bytes, " + nextByte/1024/1024 + " Mb");
+      dbg.endFunc("fill buffer");
 
       return chunk;
    }
@@ -152,7 +166,7 @@ public class InMemoryChunkReader implements Closeable {
       }
    }
 
-   private Chunk.ChunkLine readLine(Chunk chunk) throws IOException {
+   private Chunk.ChunkMarker readLine(Chunk chunk) throws IOException {
       if (nextByte >= chunkSz)
          return null;
 
@@ -173,20 +187,20 @@ public class InMemoryChunkReader implements Closeable {
             if (lineLen <= 0)
                return null;
             else
-               return chunk.addLine(nextByte - lineLen, lineLen);
+               return chunk.addMarker(nextByte - lineLen, lineLen);
          }
          else if (isCR(b) || isLF(b)) { // EOL
             int lnEnd = nextByte-1;
             lineLen += lineTailLen-1;
 
             if (nextByte > chunkSz)
-               return chunk.addLine(lnEnd - lineLen, lineLen);
+               return chunk.addMarker(lnEnd - lineLen, lineLen);
 
             b = buffer[nextByte];
             if (isCRLF(buffer[nextByte-1], b) || isLFCR(buffer[nextByte-1], b)) // it could be either CR,
                nextByte++;                                                      // LF or CRLF or LFCR
 
-            return chunk.addLine(lnEnd - lineLen, lineLen);
+            return chunk.addMarker(lnEnd - lineLen, lineLen);
          }
 
          if (nextByte == chunkSz) {
@@ -199,7 +213,7 @@ public class InMemoryChunkReader implements Closeable {
             if (lineLen == 0)
                return null;
             else
-               return chunk.addLine(nextByte-1 - lineLen, lineLen);
+               return chunk.addMarker(nextByte - 1 - lineLen, lineLen);
          }
          else if (nextByte == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
             b = buffer[nextByte];                                // than the official size
@@ -210,7 +224,7 @@ public class InMemoryChunkReader implements Closeable {
             if (lineLen == 0)
                return null;
             else
-               return chunk.addLine(nextByte - lineLen, lineLen);
+               return chunk.addMarker(nextByte - lineLen, lineLen);
          }
 
          if (nextByte == bufferSz) {

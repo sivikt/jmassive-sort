@@ -27,6 +27,7 @@ import java.security.AccessController;
 import java.util.List;
 
 import static jmassivesort.util.IOUtils.closeSilently;
+import static jmassivesort.algs.chunks.Chunk.ChunkMarker;
 
 /**
  * Writes {@link Chunk} to the disk using best approach.
@@ -44,13 +45,13 @@ public class BufferedChunkWriter implements Closeable {
       out = new FileOutputStream(dest);
    }
 
-   public void write(byte[] chunk, List<Chunk.ChunkLine> lines) throws IOException {
+   public void write(byte[] chunkData, List<ChunkMarker> lines) throws IOException {
       int bufferSz = 0;
       byte[] buffer = new byte[MAX_BUFFER_SZ];
 
-      for (Chunk.ChunkLine line : lines) {
+      for (ChunkMarker line : lines) {
          if (bufferSz + line.len + lns.length < MAX_BUFFER_SZ) {
-            System.arraycopy(chunk, line.off, buffer, bufferSz, line.len);
+            System.arraycopy(chunkData, line.off, buffer, bufferSz, line.len);
             bufferSz += line.len;
             System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
             bufferSz += lns.length;

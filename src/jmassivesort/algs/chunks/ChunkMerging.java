@@ -19,6 +19,10 @@ import jmassivesort.algs.AbstractAlgorithm;
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.util.Debugger;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 /**
  * Merges sorted chunks {@link Chunk} into one file.
  *
@@ -28,16 +32,27 @@ public class ChunkMerging extends AbstractAlgorithm {
 
    private final Debugger dbg = Debugger.create(getClass());
 
-   private ChunkMergingOptions options;
+   private ChunkMergingOptions opts;
 
    public ChunkMerging(ChunkMergingOptions options) {
       if  (options == null)
          throw new IllegalArgumentException("options cannot be null");
-      this.options = options;
+      this.opts = options;
    }
 
    @Override
    public void apply() throws SortingAlgorithmException {
+      File outFile = createNewFile(opts.getOutFilePath());
+      FileInputStream[] chunks = new FileInputStream[opts.getNumChunks()];
+      for (int i = 1; i <= opts.getNumChunks(); i++) {
+         try {
+            chunks[i] = new FileInputStream(i + ".txt");
+         }
+         catch (FileNotFoundException e) {
+            throw new SortingAlgorithmException("Cannot find chunk number " + i, e);
+         }
+      }
+
 
    }
 

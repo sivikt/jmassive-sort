@@ -29,7 +29,7 @@ import java.util.Map;
 public class ChunkMergingOptions {
 
    private int numChunks;
-   private String inputFilePath;
+   private String outFilePath;
 
    public static Builder builder() {
       return new Builder();
@@ -77,17 +77,17 @@ public class ChunkMergingOptions {
       }
    }
 
-   protected ChunkMergingOptions(int numChunks, String inputFilePath) {
+   protected ChunkMergingOptions(int numChunks, String outFilePath) {
       this.numChunks = numChunks;
-      this.inputFilePath = inputFilePath;
+      this.outFilePath = outFilePath;
    }
 
    public int getNumChunks() {
       return numChunks;
    }
 
-   public String getInputFilePath() {
-      return inputFilePath;
+   public String getOutFilePath() {
+      return outFilePath;
    }
 
 }

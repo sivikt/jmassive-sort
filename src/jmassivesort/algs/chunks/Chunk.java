@@ -16,98 +16,50 @@
 package jmassivesort.algs.chunks;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  *
  * todo javadoc
  * @author Serj Sintsov
  */
-public class Chunk implements Iterable<Chunk.ChunkLine> {
+public class Chunk {
 
-   private byte[] content;
-   private ChunkLine head, tail;
-   private int size;
+   private byte[] rawData;
+   private List<ChunkMarker> markers = new ArrayList<>(0);
 
-   public Chunk() {
-      content = new byte[0];
+   public Chunk(byte[] data) {
+      if (data == null)
+         throw new IllegalArgumentException("Raw data must be not null");
+      this.rawData = data;
    }
 
-   private class LinkedListIterator implements Iterator<ChunkLine> {
-      private ChunkLine next = head;
-
-      @Override
-      public boolean hasNext() {
-         return next != null;
-      }
-
-      @Override
-      public ChunkLine next() {
-         if (next == null)
-            throw new NoSuchElementException();
-         ChunkLine item = next;
-         next = next.next;
-         return item;
-      }
-
-      @Override
-      public void remove() {
-         throw new UnsupportedOperationException("Cannot remove from queue");
-      }
+   public byte[] rawData() {
+      return rawData;
    }
 
-   @Override
-   public Iterator<ChunkLine> iterator() {
-      return new LinkedListIterator();
+   public List<ChunkMarker> allMarkers() {
+      return markers;
    }
 
-   public byte[] getContent() {
-      return content;
+   public ChunkMarker addMarker(int offset, int length) {
+      if (offset+length >= rawData.length)
+         throw new IllegalArgumentException("Marker offset and length is greater than data length");
+      ChunkMarker ln = new ChunkMarker(offset, length);
+      markers.add(ln);
+      return ln;
    }
 
-   public void setContent(byte[] c) {
-      this.content = c;
-   }
-
-   public int size() {
-      return size;
-   }
-
-   public List<ChunkLine> getLinesList() {
-      List<ChunkLine> lines = new ArrayList<>(size);
-      ChunkLine next = head;
-
-      while (next != null) {
-         lines.add(next);
-         next = next.next;
-      }
-
-      return lines;
-   }
-
-   public ChunkLine addLine(int offset, int length) {
-      ChunkLine oldTail = tail;
-      tail = new ChunkLine(offset, length);
-      if (head == null) head = tail;
-      else      oldTail.next = tail;
-      size++;
-
-      return head;
-   }
-
-   public static class ChunkLine {
+   public static class ChunkMarker {
       public final int off;
       public final int len;
-      public ChunkLine next;
 
-      public ChunkLine(int offset, int length) {
+      public ChunkMarker(int offset, int length) {
          this.off = offset;
          this.len = length;
       }
 
-      public int compareTo(byte[] c, Chunk.ChunkLine other) {
+      public int compareTo(byte[] c, ChunkMarker other) {
          int i = this.off;
          int j = other.off;
 

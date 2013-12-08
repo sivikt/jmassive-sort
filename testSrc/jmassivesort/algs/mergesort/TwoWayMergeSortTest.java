@@ -25,7 +25,6 @@ import java.io.*;
  */
 public class TwoWayMergeSortTest {
 
-   @Test
    public void test() throws IOException {
       long start = System.currentTimeMillis();
       JMassiveSort.main(new String[] {"2way-mergesort", "777", "testSrc/resources/inputBig.txt"});
