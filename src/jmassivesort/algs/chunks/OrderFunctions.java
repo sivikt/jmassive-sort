@@ -22,7 +22,7 @@ import java.util.Comparator;
  * todo javadoc
  * @author Serj Sintsov
  */
-public class ChunkOrdering {
+public class OrderFunctions {
 
    private static final class AscComparator implements Comparator<Chunk.ChunkLine> {
       private final Chunk ch;

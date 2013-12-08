@@ -17,7 +17,7 @@ package jmassivesort.algs.chunks;
 
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.algs.AbstractAlgorithm;
-import static jmassivesort.algs.chunks.ChunkOrdering.asc;
+import static jmassivesort.algs.chunks.OrderFunctions.asc;
 import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
