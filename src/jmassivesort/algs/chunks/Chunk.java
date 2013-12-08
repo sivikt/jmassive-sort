@@ -15,7 +15,9 @@
  */
 package jmassivesort.algs.chunks;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -24,17 +26,6 @@ import java.util.NoSuchElementException;
  * @author Serj Sintsov
  */
 public class Chunk implements Iterable<Chunk.ChunkLine> {
-
-   public static class ChunkLine {
-      public final int off;
-      public final int len;
-      public ChunkLine next;
-
-      public ChunkLine(int offset, int length) {
-         this.off = offset;
-         this.len = length;
-      }
-   }
 
    private byte[] content;
    private ChunkLine head, tail;
@@ -84,15 +75,13 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       return size;
    }
 
-   public ChunkLine[] getLines() {
-      ChunkLine[] lines = new ChunkLine[size];
+   public List<ChunkLine> getLinesList() {
+      List<ChunkLine> lines = new ArrayList<>(size);
       ChunkLine next = head;
-      int i = 0;
 
       while (next != null) {
-         lines[i] = next;
+         lines.add(next);
          next = next.next;
-         i++;
       }
 
       return lines;
@@ -106,6 +95,32 @@ public class Chunk implements Iterable<Chunk.ChunkLine> {
       size++;
 
       return head;
+   }
+
+   public static class ChunkLine {
+      public final int off;
+      public final int len;
+      public ChunkLine next;
+
+      public ChunkLine(int offset, int length) {
+         this.off = offset;
+         this.len = length;
+      }
+
+      public int compareTo(byte[] c, Chunk.ChunkLine other) {
+         int i = this.off;
+         int j = other.off;
+
+         while ((i < this.off+this.len) && (j < other.off+other.len)) {
+            if (c[i] != c[j])
+               return c[i] - c[j];
+            else {
+               i++; j++;
+            }
+         }
+
+         return this.len - other.len;
+      }
    }
 
 }

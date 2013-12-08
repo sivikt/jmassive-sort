@@ -17,11 +17,14 @@ package jmassivesort.algs.chunks;
 
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.algs.AbstractAlgorithm;
+import static jmassivesort.algs.chunks.ChunkOrdering.asc;
 import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 
 import java.io.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Sorts a specified part of the input file.
@@ -48,7 +51,7 @@ public class ChunkSorting extends AbstractAlgorithm {
 
       dbg.startFunc("sort");
       dbg.startTimer();
-      Chunk.ChunkLine[] lines = sort(ch);
+      List<Chunk.ChunkLine> lines = sort(ch);
       dbg.stopTimer();
       dbg.endFunc("sort");
 
@@ -78,7 +81,13 @@ public class ChunkSorting extends AbstractAlgorithm {
       }
    }
 
-   private void saveChunk(Chunk ch, Chunk.ChunkLine[] lines) {
+   private List<Chunk.ChunkLine> sort(Chunk ch) {
+      List<Chunk.ChunkLine> lines = ch.getLinesList();
+      Collections.sort(lines, asc(ch));
+      return lines;
+   }
+
+   private void saveChunk(Chunk ch, List<Chunk.ChunkLine> lines) {
       File outFile = createNewFile(options.getChunkId() + ".txt");
       BufferedChunkWriter chWr = null;
 
@@ -92,54 +101,6 @@ public class ChunkSorting extends AbstractAlgorithm {
       finally {
          closeSilently(chWr);
       }
-   }
-
-   private Chunk.ChunkLine[] sort(Chunk ch) {
-      Chunk.ChunkLine[] lines = ch.getLines();
-      quicksort(ch, lines, 0, lines.length - 1);
-      return lines;
-   }
-
-   private void quicksort(Chunk ch, Chunk.ChunkLine[] a, int low, int high) {
-      int i = low, j = high;
-      Chunk.ChunkLine pivot = a[low + (high-low)/2];
-
-      while (i <= j) {
-         while (compare(ch.getContent(), a[i], pivot) < 0) i++;
-         while (compare(ch.getContent(), a[j], pivot) > 0) j--;
-
-         if (i <= j) {
-            exchange(a, i, j);
-            i++;
-            j--;
-         }
-      }
-
-      if (low < j)
-         quicksort(ch, a, low, j);
-      if (i < high)
-         quicksort(ch, a, i, high);
-   }
-
-   private void exchange(Chunk.ChunkLine[] lines, int i, int j) {
-      Chunk.ChunkLine temp = lines[i];
-      lines[i] = lines[j];
-      lines[j] = temp;
-   }
-
-   private int compare(byte[] c, Chunk.ChunkLine ln1, Chunk.ChunkLine ln2) {
-      int i = ln1.off;
-      int j = ln2.off;
-
-      while ((i < ln1.off +ln1.len) && (j < ln2.off +ln2.len)) {
-         if (c[i] != c[j])
-            return c[i] - c[j];
-         else {
-            i++; j++;
-         }
-      }
-
-      return ln1.len - ln2.len;
    }
 
 }

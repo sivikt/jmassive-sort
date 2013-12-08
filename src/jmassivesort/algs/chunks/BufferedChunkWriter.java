@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.AccessController;
+import java.util.List;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 
@@ -43,7 +44,7 @@ public class BufferedChunkWriter implements Closeable {
       out = new FileOutputStream(dest);
    }
 
-   public void write(byte[] chunk, Chunk.ChunkLine[] lines) throws IOException {
+   public void write(byte[] chunk, List<Chunk.ChunkLine> lines) throws IOException {
       int bufferSz = 0;
       byte[] buffer = new byte[MAX_BUFFER_SZ];
 

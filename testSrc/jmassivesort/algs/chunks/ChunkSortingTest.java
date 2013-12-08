@@ -30,11 +30,13 @@ public class ChunkSortingTest {
 
 
    public static void main(String[] args) throws IOException {
-      long start = System.currentTimeMillis();
-      JMassiveSort.main(new String[]{"chunk-sorting", "1", "12", "testSrc/resources/inputHuge.txt"});
-      long end = System.currentTimeMillis();
+      for (int i = 1; i < 3; i++) {
+         long start = System.currentTimeMillis();
+         JMassiveSort.main(new String[]{"chunk-sorting", i+"", "36", "testSrc/resources/inputHuge.txt"});
+         long end = System.currentTimeMillis();
 
-      System.out.println("Sorted in " + (double)(end - start)/1000 + " s");
+         System.out.println("Sorted in " + (double)(end - start)/1000 + " s");
+      }
 
       File output = new File("1.txt");
       assert output.exists() && output.isFile();
