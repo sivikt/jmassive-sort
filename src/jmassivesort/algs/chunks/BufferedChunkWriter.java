@@ -15,15 +15,12 @@
  */
 package jmassivesort.algs.chunks;
 
-import sun.security.action.GetPropertyAction;
-
 import java.io.OutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.AccessController;
 import java.util.List;
 
 import static jmassivesort.util.IOUtils.closeSilently;
@@ -37,7 +34,7 @@ import static jmassivesort.algs.chunks.Chunk.ChunkMarker;
 public class BufferedChunkWriter implements Closeable {
 
    private static final int MAX_BUFFER_SZ = 10 * 1024 * 1024; // 10Mb
-   private static final byte[] lns = AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes();
+   private static final byte[] lns = System.getProperty("line.separator").getBytes();
 
    private OutputStream out = null;
 
