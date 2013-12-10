@@ -46,7 +46,10 @@ public class InMemoryChunkReader implements Closeable {
    private File src;
    private InputStream in;
 
-   public InMemoryChunkReader(int chunkId, int numChunks, File src) {
+   public InMemoryChunkReader(int chunkId, int numChunks, File src) throws FileNotFoundException {
+      if (!src.exists() || !src.isFile())
+         throw new FileNotFoundException("No such file '" + src.getAbsolutePath() + "'");
+
       // keep chunk size equals to the closest integer number which
       // is bigger then the decimal chunk size number (e.g. 1.2 -> 2)
       chunkSz  = (long) Math.ceil((double) src.length() / numChunks);

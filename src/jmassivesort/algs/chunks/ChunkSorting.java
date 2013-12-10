@@ -63,10 +63,11 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private Chunk readChunk() {
-      File srcFile = getFileOnFS(opts.getInputFilePath());
       InMemoryChunkReader cr = null;
 
       try {
+         File srcFile = getFileOnFS(opts.getInputFilePath());
+
          dbg.startFunc("read chunk");
          dbg.markFreeMemory();
 

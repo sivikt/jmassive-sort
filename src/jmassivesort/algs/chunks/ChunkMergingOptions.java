@@ -19,6 +19,9 @@ import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,9 +30,6 @@ import java.util.Map;
  * @author Serj Sintsov
  */
 public class ChunkMergingOptions {
-
-   private int numChunks;
-   private String outFilePath;
 
    public static Builder builder() {
       return new Builder();
@@ -46,7 +46,7 @@ public class ChunkMergingOptions {
       }};
 
       protected int numChunks;
-      protected String outFilePath;
+      protected Path outFilePath;
 
       public ChunkMergingOptions build(String[] options) throws CliOptionsBuilderException {
          if (options == null || options.length != 2)
@@ -61,7 +61,13 @@ public class ChunkMergingOptions {
             throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
          }
 
-         outFilePath = options[1];
+         try {
+            outFilePath = Paths.get(URI.create(options[1]));
+         }
+         catch (Exception e) {
+            throw new CliOptionsBuilderException(usage("Incorrect output path"), optionDescriptions);
+         }
+         
          return new ChunkMergingOptions(numChunks, outFilePath);
       }
 
@@ -77,7 +83,10 @@ public class ChunkMergingOptions {
       }
    }
 
-   protected ChunkMergingOptions(int numChunks, String outFilePath) {
+   private int numChunks;
+   private Path outFilePath;
+
+   protected ChunkMergingOptions(int numChunks, Path outFilePath) {
       this.numChunks = numChunks;
       this.outFilePath = outFilePath;
    }
@@ -86,7 +95,7 @@ public class ChunkMergingOptions {
       return numChunks;
    }
 
-   public String getOutFilePath() {
+   public Path getOutFilePath() {
       return outFilePath;
    }
 
