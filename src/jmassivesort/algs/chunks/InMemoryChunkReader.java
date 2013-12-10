@@ -95,7 +95,7 @@ public class InMemoryChunkReader implements Closeable {
       dbg.stopTimer();
       dbg.checkMemoryUsage();
       dbg.echo("total number of lines " + chunk.rawData().length + ". total data size " + nextByte + " bytes, " + nextByte/1024/1024 + " Mb");
-      dbg.endFunc("fill buffer");
+      dbg.endFunc("readChunk");
 
       return chunk;
    }

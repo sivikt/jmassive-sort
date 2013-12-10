@@ -21,8 +21,10 @@ import static jmassivesort.algs.chunks.OrderFunctions.asc;
 import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
+import static jmassivesort.util.IOUtils.newFileOnFS;
+import static jmassivesort.util.IOUtils.getFileOnFS;
 
-import java.io.*;
+import java.io.File;
 import java.util.Collections;
 
 /**
@@ -61,7 +63,7 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private Chunk readChunk() {
-      File srcFile = new File(opts.getInputFilePath());
+      File srcFile = getFileOnFS(opts.getInputFilePath());
       InMemoryChunkReader cr = null;
 
       try {
@@ -76,11 +78,8 @@ public class ChunkSorting extends AbstractAlgorithm {
 
          return chunk;
       }
-      catch (FileNotFoundException e) {
-         throw new SortingAlgorithmException("Cannot find file '" + opts.getInputFilePath() + "'", e);
-      }
-      catch (IOException e) {
-         throw new SortingAlgorithmException("Cannot read file '" + opts.getInputFilePath() + "'", e);
+      catch (Exception e) {
+         throw new SortingAlgorithmException("Cannot read chunk from file '" + opts.getInputFilePath() + "'", e);
       }
       finally {
          closeSilently(cr);
@@ -100,10 +99,11 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private void saveChunk(Chunk ch) {
-      File outFile = createNewFile(opts.getChunkId() + ".txt");
       BufferedChunkWriter chWr = null;
 
       try {
+         File outFile = newFileOnFS(opts.getOutputFilePath());
+
          dbg.startFunc("write to disk");
          dbg.markFreeMemory();
          dbg.startTimer();
@@ -115,8 +115,8 @@ public class ChunkSorting extends AbstractAlgorithm {
          dbg.checkMemoryUsage();
          dbg.endFunc("write to disk");
       }
-      catch (IOException e) {
-         throw new SortingAlgorithmException("Cannot write to file '" + outFile.getAbsolutePath() + "'", e);
+      catch (Exception e) {
+         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getInputFilePath().toString() + "'", e);
       }
       finally {
          closeSilently(chWr);

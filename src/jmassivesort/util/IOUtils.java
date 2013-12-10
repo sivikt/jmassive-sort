@@ -16,7 +16,12 @@
 package jmassivesort.util;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * todo javadoc
@@ -26,9 +31,31 @@ public final class IOUtils {
 
    public static void closeSilently(Closeable target) {
       try {
-         if (target != null) target.close();
+         if (target != null)
+            target.close();
       }
       catch (IOException e) { /** nothing to do */ }
+   }
+
+   public static File getFileOnFS(Path path) {
+      return path.toFile();
+   }
+
+   public static File getFileOnFS(String path) {
+      Path fPath = Paths.get(URI.create(path));
+      return fPath.toFile();
+   }
+
+   public static File newFileOnFS(String path) throws IOException {
+      Path fPath = Paths.get(URI.create(path));
+      return newFileOnFS(fPath);
+   }
+
+   public static File newFileOnFS(Path path) throws IOException {
+      File newFile = path.toFile();
+
+      if (newFile.createNewFile()) return newFile;
+      else throw new FileAlreadyExistsException("File '" + path.toString() + "' already exists");
    }
 
 }

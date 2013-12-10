@@ -18,8 +18,11 @@ package jmassivesort.algs.chunks;
 import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
+import jmassivesort.util.Debugger;
 
-import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,9 +32,7 @@ import java.util.Map;
  */
 public class ChunkSortingOptions {
 
-   private int chunkId;
-   private int numChunks;
-   private String inputFilePath;
+   private static final Debugger dbg = Debugger.create(ChunkSortingOptions.class);
 
    public static Builder builder() {
       return new Builder();
@@ -45,12 +46,12 @@ public class ChunkSortingOptions {
       private final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
          put("<chunkId>", "0 < Integer value <= <numChunks>. The result of sorting is stored into file <chunkId>.txt");
          put("<numChunks>", "Integer value > 0. Together with the <chunkId> used to determine what part of file to sort");
-         put("<inputFile>", "Input file");
+         put("<inputFile>", "Input file path in RFC 2396 format");
       }};
 
       protected int chunkId;
       protected int numChunks;
-      protected String inputFilePath;
+      protected Path inputFilePath;
 
       public ChunkSortingOptions build(String[] options) throws CliOptionsBuilderException {
          if (options == null || options.length != 3)
@@ -69,12 +70,17 @@ public class ChunkSortingOptions {
             throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
          }
 
-         inputFilePath = options[2];
-         File in = new File(inputFilePath);
-         if (!in.exists() || !in.isFile())
-            throw new CliOptionsBuilderException(usage("No such file"), optionDescriptions);
+         try {
+            inputFilePath = Paths.get(URI.create(options[2]));
+         }
+         catch (Exception e) {
+            throw new CliOptionsBuilderException(usage("Incorrect input file path"), optionDescriptions);
+         }
 
-         return new ChunkSortingOptions(chunkId, numChunks, inputFilePath);
+         String outFileName = chunkId + ".chunk";
+         Path outputFilePath = Paths.get(inputFilePath.getParent().toString(), outFileName);
+
+         return new ChunkSortingOptions(chunkId, numChunks, inputFilePath, outputFilePath);
       }
 
       private String usage(String error) {
@@ -85,14 +91,26 @@ public class ChunkSortingOptions {
    public static class ChunkSortingBuilder implements SortingAlgorithmBuilder {
       @Override
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
-         return new ChunkSorting(ChunkSortingOptions.builder().build(options));
+         dbg.startFunc("build options and alg instance");
+         dbg.startTimer();
+         ChunkSorting chunkSorting = new ChunkSorting(ChunkSortingOptions.builder().build(options));
+         dbg.stopTimer();
+         dbg.endFunc("build options and alg instance");
+
+         return chunkSorting;
       }
    }
 
-   protected ChunkSortingOptions(int chunksId, int numChunks, String inputFilePath) {
+   private int chunkId;
+   private int numChunks;
+   private Path inputFilePath;
+   private Path outputFilePath;
+
+   protected ChunkSortingOptions(int chunksId, int numChunks, Path inputFilePath, Path outputFilePath) {
       this.chunkId = chunksId;
       this.numChunks = numChunks;
       this.inputFilePath = inputFilePath;
+      this.outputFilePath = outputFilePath;
    }
 
    public int getChunkId() {
@@ -103,8 +121,12 @@ public class ChunkSortingOptions {
       return numChunks;
    }
 
-   public String getInputFilePath() {
+   public Path getInputFilePath() {
       return inputFilePath;
+   }
+
+   public Path getOutputFilePath() {
+      return outputFilePath;
    }
 
 }

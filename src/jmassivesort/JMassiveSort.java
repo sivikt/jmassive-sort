@@ -20,6 +20,7 @@ import jmassivesort.algs.chunks.ChunkMergingOptions;
 import jmassivesort.algs.chunks.ChunkSortingOptions;
 import static jmassivesort.JMassiveSortUsageFormatter.printUsage;
 import jmassivesort.algs.mergesort.TwoWayMergeSortOptions;
+import jmassivesort.util.Debugger;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,6 +31,8 @@ import java.util.Map;
  * @author Serj Sintsov
  */
 public class JMassiveSort {
+
+   private static final Debugger dbg = Debugger.create(JMassiveSort.class);
 
    private static final String TWO_WAY_MERGESORT_NAME = "2way-mergesort";
    private static final String CHUNK_SORTING = "chunk-sorting";
@@ -78,10 +81,18 @@ public class JMassiveSort {
       SortingAlgorithmBuilder alg = chooseAlgorithm(algorithmName);
 
       try {
+         dbg.startFunc("Start alg");
+         dbg.startTimer();
          alg.build(algorithmOptions).apply();
+         dbg.stopTimer();
+         dbg.endFunc("Start alg");
       }
       catch (CliOptionsBuilderException e) {
          printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());
+         System.exit(1);
+      }
+      catch (Throwable any) { // finish with error status in any case
+         any.printStackTrace();
          System.exit(1);
       }
    }
