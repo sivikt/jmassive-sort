@@ -15,9 +15,6 @@
  */
 package jmassivesort.algs.chunks;
 
-import jmassivesort.algs.chunks.Chunk;
-import jmassivesort.algs.chunks.InMemoryChunkReader;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

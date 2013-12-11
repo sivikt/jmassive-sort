@@ -16,6 +16,7 @@
 package jmassivesort.algs.chunks;
 
 import java.util.Comparator;
+import jmassivesort.algs.chunks.Chunk.ChunkMarker;
 
 /**
  *
@@ -24,7 +25,7 @@ import java.util.Comparator;
  */
 public class OrderFunctions {
 
-   private static final class AscComparator implements Comparator<Chunk.ChunkMarker> {
+   private static final class AscComparator implements Comparator<ChunkMarker> {
       private final Chunk ch;
 
       public AscComparator(Chunk ch) {
@@ -32,12 +33,12 @@ public class OrderFunctions {
       }
 
       @Override
-      public int compare(Chunk.ChunkMarker o1, Chunk.ChunkMarker o2) {
-         return o1.compareTo(ch.rawData(), o2);
+      public int compare(ChunkMarker m1, ChunkMarker m2) {
+         return ch.compareMarkers(m1, m2);
       }
    }
 
-   public static Comparator<Chunk.ChunkMarker> asc(Chunk ch) {
+   public static Comparator<ChunkMarker> asc(Chunk ch) {
       return new AscComparator(ch);
    }
 

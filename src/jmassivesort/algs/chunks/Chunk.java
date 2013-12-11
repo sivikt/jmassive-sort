@@ -25,6 +25,16 @@ import java.util.List;
  */
 public class Chunk {
 
+   public static class ChunkMarker {
+      public final int off;
+      public final int len;
+
+      public ChunkMarker(int offset, int length) {
+         this.off = offset;
+         this.len = length;
+      }
+   }
+
    private byte[] rawData;
    private List<ChunkMarker> markers = new ArrayList<>(0);
 
@@ -50,29 +60,34 @@ public class Chunk {
       return ln;
    }
 
-   public static class ChunkMarker {
-      public final int off;
-      public final int len;
+   public int compareMarkers(ChunkMarker m1, ChunkMarker m2) {
+      int i = m1.off;
+      int j = m2.off;
 
-      public ChunkMarker(int offset, int length) {
-         this.off = offset;
-         this.len = length;
-      }
-
-      public int compareTo(byte[] c, ChunkMarker other) {
-         int i = this.off;
-         int j = other.off;
-
-         while ((i < this.off+this.len) && (j < other.off+other.len)) {
-            if (c[i] != c[j])
-               return c[i] - c[j];
-            else {
-               i++; j++;
-            }
+      while ((i < m1.off+m1.len) && (j < m2.off+m2.len)) {
+         if (rawData[i] != rawData[j])
+            return rawData[i] - rawData[j];
+         else {
+            i++; j++;
          }
-
-         return this.len - other.len;
       }
+
+      return m1.len - m2.len;
+   }
+
+   public static int compareMarkers(byte[] chunk1, ChunkMarker m1, byte[] chunk2, ChunkMarker m2) {
+      int i = m1.off;
+      int j = m2.off;
+
+      while ((i < m1.off+m1.len) && (j < m2.off+m2.len)) {
+         if (chunk1[i] != chunk2[j])
+            return chunk1[i] - chunk2[j];
+         else {
+            i++; j++;
+         }
+      }
+
+      return m1.len - m2.len;
    }
 
 }
