@@ -43,7 +43,7 @@ public class ChunkMerging extends AbstractAlgorithm {
 
    @Override
    public void apply() throws SortingAlgorithmException {
-//      File outFile = IOUtils.newFileOnFS(opts.getOutFilePath());
+//      File outFilePath = IOUtils.newFileOnFS(opts.getOutFilePath());
 //      FileInputStream[] chunks = new FileInputStream[opts.getNumChunks()];
 //      for (int i = 1; i <= opts.getNumChunks(); i++) {
 //         try {

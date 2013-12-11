@@ -18,7 +18,9 @@ package jmassivesort.algs.chunks;
 import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
+import jmassivesort.util.Debugger;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,6 +32,8 @@ import java.util.Map;
  * @author Serj Sintsov
  */
 public class ChunkMergingOptions {
+
+   private static final Debugger dbg = Debugger.create(ChunkMergingOptions.class);
 
    public static Builder builder() {
       return new Builder();
@@ -67,8 +71,15 @@ public class ChunkMergingOptions {
          catch (Exception e) {
             throw new CliOptionsBuilderException(usage("Incorrect output path"), optionDescriptions);
          }
-         
-         return new ChunkMergingOptions(numChunks, outFilePath);
+
+         File[] inputFiles = new File[numChunks];
+         Path inPath;
+         for (int i = 0; i < numChunks; i++) {
+            inPath = Paths.get(outFilePath.getParent().toString(), (i+1) + ".chunk");
+            inputFiles[i] = inPath.toFile();
+         }
+
+         return new ChunkMergingOptions(numChunks, outFilePath, inputFiles);
       }
 
       private String usage(String error) {
@@ -79,16 +90,26 @@ public class ChunkMergingOptions {
    public static class ChunkMergingBuilder implements SortingAlgorithmBuilder {
       @Override
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
-         return new ChunkMerging(ChunkMergingOptions.builder().build(options));
+         dbg.startFunc("build options and alg instance");
+         dbg.startTimer();
+         dbg.markFreeMemory();
+         ChunkMerging chunkMerging = new ChunkMerging(ChunkMergingOptions.builder().build(options));
+         dbg.checkMemoryUsage();
+         dbg.stopTimer();
+         dbg.endFunc("build options and alg instance");
+
+         return chunkMerging;
       }
    }
 
    private int numChunks;
    private Path outFilePath;
+   private File[] inputFiles;
 
-   protected ChunkMergingOptions(int numChunks, Path outFilePath) {
+   protected ChunkMergingOptions(int numChunks, Path outFilePath, File[] inputFiles) {
       this.numChunks = numChunks;
       this.outFilePath = outFilePath;
+      this.inputFiles = inputFiles;
    }
 
    public int getNumChunks() {
@@ -97,6 +118,10 @@ public class ChunkMergingOptions {
 
    public Path getOutFilePath() {
       return outFilePath;
+   }
+
+   public File[] getInputFiles() {
+      return inputFiles;
    }
 
 }

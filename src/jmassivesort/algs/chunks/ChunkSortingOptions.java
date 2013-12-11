@@ -19,7 +19,9 @@ import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
 import jmassivesort.util.Debugger;
+import static jmassivesort.util.IOUtils.getFileOnFS;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,7 +53,7 @@ public class ChunkSortingOptions {
 
       protected int chunkId;
       protected int numChunks;
-      protected Path inputFilePath;
+      protected File inputFile;
 
       public ChunkSortingOptions build(String[] options) throws CliOptionsBuilderException {
          if (options == null || options.length != 3)
@@ -71,16 +73,17 @@ public class ChunkSortingOptions {
          }
 
          try {
-            inputFilePath = Paths.get(URI.create(options[2]));
+            Path inPath = Paths.get(URI.create(options[2]));
+            inputFile = getFileOnFS(inPath);
          }
          catch (Exception e) {
             throw new CliOptionsBuilderException(usage("Incorrect input file path"), optionDescriptions);
          }
 
          String outFileName = chunkId + ".chunk";
-         Path outputFilePath = Paths.get(inputFilePath.getParent().toString(), outFileName);
+         Path outputFilePath = Paths.get(inputFile.getParent().toString(), outFileName);
 
-         return new ChunkSortingOptions(chunkId, numChunks, inputFilePath, outputFilePath);
+         return new ChunkSortingOptions(chunkId, numChunks, inputFile, outputFilePath);
       }
 
       private String usage(String error) {
@@ -93,7 +96,9 @@ public class ChunkSortingOptions {
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
          dbg.startFunc("build options and alg instance");
          dbg.startTimer();
+         dbg.markFreeMemory();
          ChunkSorting chunkSorting = new ChunkSorting(ChunkSortingOptions.builder().build(options));
+         dbg.checkMemoryUsage();
          dbg.stopTimer();
          dbg.endFunc("build options and alg instance");
 
@@ -103,14 +108,14 @@ public class ChunkSortingOptions {
 
    private int chunkId;
    private int numChunks;
-   private Path inputFilePath;
+   private File inputFile;
    private Path outputFilePath;
 
-   protected ChunkSortingOptions(int chunksId, int numChunks, Path inputFilePath, Path outputFilePath) {
+   protected ChunkSortingOptions(int chunksId, int numChunks, File inputFile, Path outputFile) {
       this.chunkId = chunksId;
       this.numChunks = numChunks;
-      this.inputFilePath = inputFilePath;
-      this.outputFilePath = outputFilePath;
+      this.inputFile = inputFile;
+      this.outputFilePath = outputFile;
    }
 
    public int getChunkId() {
@@ -121,8 +126,8 @@ public class ChunkSortingOptions {
       return numChunks;
    }
 
-   public Path getInputFilePath() {
-      return inputFilePath;
+   public File getInputFile() {
+      return inputFile;
    }
 
    public Path getOutputFilePath() {

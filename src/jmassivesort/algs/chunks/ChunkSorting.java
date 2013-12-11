@@ -22,7 +22,6 @@ import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 import static jmassivesort.util.IOUtils.newFileOnFS;
-import static jmassivesort.util.IOUtils.getFileOnFS;
 
 import java.io.File;
 import java.util.Collections;
@@ -66,7 +65,7 @@ public class ChunkSorting extends AbstractAlgorithm {
       InMemoryChunkReader cr = null;
 
       try {
-         File srcFile = getFileOnFS(opts.getInputFilePath());
+         File srcFile = opts.getInputFile();
 
          dbg.startFunc("read chunk");
          dbg.markFreeMemory();
@@ -80,7 +79,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          return chunk;
       }
       catch (Exception e) {
-         throw new SortingAlgorithmException("Cannot read chunk from file '" + opts.getInputFilePath() + "'", e);
+         throw new SortingAlgorithmException("Cannot read chunk from file '" + opts.getInputFile() + "'", e);
       }
       finally {
          closeSilently(cr);
@@ -117,7 +116,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          dbg.endFunc("write to disk");
       }
       catch (Exception e) {
-         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getInputFilePath().toString() + "'", e);
+         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getInputFile().toString() + "'", e);
       }
       finally {
          closeSilently(chWr);
