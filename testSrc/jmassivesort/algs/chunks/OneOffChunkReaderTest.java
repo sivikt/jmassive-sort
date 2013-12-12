@@ -15,21 +15,21 @@
  */
 package jmassivesort.algs.chunks;
 
+import org.testng.annotations.Test;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
 /**
+ * Unit test for {@link OneOffChunkReader}.
+ *
  * @author Serj Sintsov
  */
 public class OneOffChunkReaderTest {
 
-   public static void main(String[] args) throws IOException {
-      test();
-   }
-
-  // @Test
+   @Test
    public static void test() throws IOException {
       File src = new File("testSrc/resources/inputHuge.txt");
       BufferedReader rd = new BufferedReader(new FileReader(src));

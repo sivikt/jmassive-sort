@@ -15,12 +15,7 @@
  */
 package jmassivesort.algs.chunks;
 
-import java.io.OutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 import static jmassivesort.util.IOUtils.closeSilently;
@@ -31,41 +26,51 @@ import static jmassivesort.algs.chunks.Chunk.ChunkMarker;
  *
  * @author Serj Sintsov
  */
-public class BufferedChunkWriter implements Closeable {
+public class BufferedChunkWriter implements Closeable, Flushable {
 
-   private static final int MAX_BUFFER_SZ = 10 * 1024 * 1024; // 10Mb
+   private static final int MAX_BUFFER_SZ = 20 * 1024 * 1024; // 10Mb
    private static final byte[] lns = System.getProperty("line.separator").getBytes();
 
    private OutputStream out = null;
+   private int bufferSz = 0;
+   private byte[] buffer = new byte[MAX_BUFFER_SZ];
 
    public BufferedChunkWriter(File dest) throws FileNotFoundException {
       out = new FileOutputStream(dest);
    }
 
    public void write(byte[] chunkData, List<ChunkMarker> lines) throws IOException {
-      int bufferSz = 0;
-      byte[] buffer = new byte[MAX_BUFFER_SZ];
+      for (ChunkMarker line : lines)
+         write(chunkData, line);
+   }
 
-      for (ChunkMarker line : lines) {
-         if (bufferSz + line.len + lns.length < MAX_BUFFER_SZ) {
-            System.arraycopy(chunkData, line.off, buffer, bufferSz, line.len);
-            bufferSz += line.len;
-            System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
-            bufferSz += lns.length;
-         }
-         else {
-            out.write(buffer, 0, bufferSz);
-            buffer = new byte[MAX_BUFFER_SZ];
-            bufferSz = 0;
-         }
+   public void write(byte[] chunkData, ChunkMarker line) throws IOException {
+      if (bufferSz + line.len + lns.length < MAX_BUFFER_SZ)
+         fill(chunkData, line);
+      else {
+         flush();
+         fill(chunkData, line);
       }
+   }
 
-      out.write(buffer, 0, bufferSz);
+   private void fill(byte[] chunkData, ChunkMarker line) {
+      System.arraycopy(chunkData, line.off, buffer, bufferSz, line.len);
+      bufferSz += line.len;
+      System.arraycopy(lns, 0, buffer, bufferSz, lns.length);
+      bufferSz += lns.length;
    }
 
    @Override
    public void close() throws IOException {
+      flush();
       closeSilently(out);
+   }
+
+   @Override
+   public void flush() throws IOException {
+      out.write(buffer, 0, bufferSz);
+      buffer = new byte[MAX_BUFFER_SZ];
+      bufferSz = 0;
    }
 
 }

@@ -17,6 +17,8 @@ package jmassivesort.algs.chunks;
 
 import jmassivesort.JMassiveSort;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 
 /**
@@ -26,10 +28,11 @@ public class ChunkMergingTest {
 
    public static void main(String[] args) throws IOException {
       long start = System.currentTimeMillis();
-      JMassiveSort.main(new String[]{"chunk-merging", "36", "file:///home/sivikt/IThings/my-dev/jmassive-sort/testSrc/resources/output"});
+      JMassiveSort.main(new String[]{"chunk-merging", "10", "file:///home/sivikt/IThings/my-dev/jmassive-sort/testSrc/resources/merged.out"});
       long end = System.currentTimeMillis();
 
       System.out.println("Merged in " + (double)(end - start)/1000 + " s");
+
    }
 
 }

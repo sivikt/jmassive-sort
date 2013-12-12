@@ -31,11 +31,11 @@ public class SequentialChunkReaderTest {
    public static void test() throws IOException {
       final byte[] lns = System.getProperty("line.separator").getBytes();
 
-      File src = new File("testSrc/resources/inputBig.txt");
+      File src = new File("testSrc/resources/1.chunk");
       File dest = new File("testSrc/resources/testOut");
       OutputStream out = new FileOutputStream(dest);
 
-      SequentialChunkReader chRd = new SequentialChunkReader(19, src);
+      SequentialChunkReader chRd = new SequentialChunkReader(1*1024*1024, src);
 
       Chunk chunk;
       int nChunks = 0;
