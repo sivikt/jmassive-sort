@@ -32,7 +32,7 @@ public class ChunkSortingTest {
    public static void main(String[] args) throws IOException {
       for (int i = 1; i < 3; i++) {
          long start = System.currentTimeMillis();
-         JMassiveSort.main(new String[]{"chunk-sorting", i+"", "36", "file:///home/sivikt/IThings/my-dev/jmassive-sort/testSrc/resources/inputHuge1.txt"});
+         JMassiveSort.main(new String[]{"chunk-sorting", i+"", "36", "file:///home/sivikt/IThings/my-dev/jmassive-sort/testSrc/resources/inputTiny.txt"});
          long end = System.currentTimeMillis();
 
          System.out.println("Sorted in " + (double)(end - start)/1000 + " s");

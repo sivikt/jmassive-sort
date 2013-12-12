@@ -19,17 +19,18 @@ import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.*;
+import jmassivesort.algs.chunks.Chunk.ChunkMarker;
 
 /**
  * Reads a part of the file's content called {@link Chunk}.
  * <p/>
  * To minimize disk reads this implementation reads the whole
- * file's part into the memory and then separates the part into
- * lines (finds lines offsets and etc.)
+ * file's part into the memory and then separates it into lines
+ * (finds lines offsets and etc.).
  *
  * @author Serj Sintsov
  */
-public class InMemoryChunkReader implements Closeable {
+public class OneOffChunkReader implements Closeable {
 
    private final Debugger dbg = Debugger.create(getClass());
 
@@ -37,29 +38,38 @@ public class InMemoryChunkReader implements Closeable {
    private static final int MAX_CHUNK_SIZE      = Integer.MAX_VALUE - CHUNK_OVERHEAD_SIZE - 1;
 
    private final long chunkSz;
-   private final long chunkOff;
 
    private byte[] buffer;
    private int bufferSz;
    private int nextByte;
 
-   private File src;
    private InputStream in;
 
-   public InMemoryChunkReader(int chunkId, int numChunks, File src) throws FileNotFoundException {
+   public OneOffChunkReader(int chunkId, int numChunks, File src) throws IOException {
       if (!src.exists() || !src.isFile())
          throw new FileNotFoundException("No such file '" + src.getAbsolutePath() + "'");
 
       // keep chunk size equals to the closest integer number which
       // is bigger then the decimal chunk size number (e.g. 1.2 -> 2)
       chunkSz  = (long) Math.ceil((double) src.length() / numChunks);
-      long off = chunkId * chunkSz - chunkSz;
-      chunkOff = off == src.length() ? -1 : off; // too many chunks
-
       if (chunkSz == MAX_CHUNK_SIZE)
          throw new IllegalArgumentException("Chunk size too large. Max value is " + MAX_CHUNK_SIZE + " byte");
 
-      this.src = src;
+      long off = chunkId * chunkSz - chunkSz;
+      if (off < src.length()) {
+         long chunkOff = calcOffset(off, chunkSz, src);
+         in = createInputStream(src, chunkOff);
+      }
+      else // too many chunks
+         in = null;
+   }
+
+   private void fill(int len) throws IOException {
+      buffer = new byte[len+1]; // +1 for EOF mark
+      int n = in.read(buffer, 0, len);
+      bufferSz = n > 0 ? n : 0;
+      buffer[bufferSz] = -1;
+      nextByte = 0;
    }
 
    public Chunk readChunk() throws IOException {
@@ -67,22 +77,19 @@ public class InMemoryChunkReader implements Closeable {
       dbg.markFreeMemory();
       dbg.startTimer();
 
-      if (chunkOff == -1)
-         return new Chunk(new byte[0]);
+      if (in == null) // just return empty chunk
+         return new Chunk();
 
       dbg.startFunc("fill buffer");
       dbg.markFreeMemory();
       dbg.startTimer();
-      long realOffset = calcOffset(chunkOff, chunkSz, src);
-
-      in = createInputStream(src, realOffset);
-
       fill((int)chunkSz + CHUNK_OVERHEAD_SIZE + 1);
       dbg.stopTimer();
       dbg.checkMemoryUsage();
       dbg.endFunc("fill buffer");
 
-      Chunk chunk = new Chunk(buffer);
+      Chunk chunk = new Chunk();
+      chunk.setRawData(buffer);
 
       dbg.startFunc("read chunk lines");
       dbg.markFreeMemory();
@@ -169,7 +176,7 @@ public class InMemoryChunkReader implements Closeable {
       }
    }
 
-   private Chunk.ChunkMarker readLine(Chunk chunk) throws IOException {
+   private ChunkMarker readLine(Chunk chunk) throws IOException {
       if (nextByte >= chunkSz)
          return null;
 
@@ -200,8 +207,8 @@ public class InMemoryChunkReader implements Closeable {
                return chunk.addMarker(lnEnd - lineLen, lineLen);
 
             b = buffer[nextByte];
-            if (isCRLF(buffer[nextByte-1], b) || isLFCR(buffer[nextByte-1], b)) // it could be either CR,
-               nextByte++;                                                      // LF or CRLF or LFCR
+            if (isCRLF(buffer[lnEnd], b) || isLFCR(buffer[lnEnd], b)) // it could be either CR,
+               nextByte++;                                            // LF or CRLF or LFCR
 
             return chunk.addMarker(lnEnd - lineLen, lineLen);
          }
@@ -216,7 +223,7 @@ public class InMemoryChunkReader implements Closeable {
             if (lineLen == 0)
                return null;
             else
-               return chunk.addMarker(nextByte - 1 - lineLen, lineLen);
+               return chunk.addMarker(nextByte-1 - lineLen, lineLen);
          }
          else if (nextByte == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
             b = buffer[nextByte];                                // than the official size
@@ -252,14 +259,6 @@ public class InMemoryChunkReader implements Closeable {
 
    private boolean isLFCR(int c1, int c2) {
       return c1 == '\n' && c2 == '\r';
-   }
-
-   private void fill(int len) throws IOException {
-      buffer = new byte[len+1]; // +1 for EOF mark
-      int n = in.read(buffer, 0, len);
-      bufferSz = n > 0 ? n : 0;
-      buffer[bufferSz] = -1;
-      nextByte = 0;
    }
 
    @Override

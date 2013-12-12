@@ -62,7 +62,7 @@ public class ChunkSorting extends AbstractAlgorithm {
    }
 
    private Chunk readChunk() {
-      InMemoryChunkReader cr = null;
+      OneOffChunkReader cr = null;
 
       try {
          File srcFile = opts.getInputFile();
@@ -70,7 +70,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          dbg.startFunc("read chunk");
          dbg.markFreeMemory();
 
-         cr = new InMemoryChunkReader(opts.getChunkId(), opts.getNumChunks(), srcFile);
+         cr = new OneOffChunkReader(opts.getChunkId(), opts.getNumChunks(), srcFile);
          Chunk chunk = cr.readChunk();
 
          dbg.checkMemoryUsage();
@@ -116,7 +116,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          dbg.endFunc("write to disk");
       }
       catch (Exception e) {
-         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getInputFile().toString() + "'", e);
+         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getOutputFilePath() + "'", e);
       }
       finally {
          closeSilently(chWr);

@@ -72,14 +72,8 @@ public class ChunkMergingOptions {
             throw new CliOptionsBuilderException(usage("Incorrect output path"), optionDescriptions);
          }
 
-         File[] inputFiles = new File[numChunks];
-         Path inPath;
-         for (int i = 0; i < numChunks; i++) {
-            inPath = Paths.get(outFilePath.getParent().toString(), (i+1) + ".chunk");
-            inputFiles[i] = inPath.toFile();
-         }
 
-         return new ChunkMergingOptions(numChunks, outFilePath, inputFiles);
+         return new ChunkMergingOptions(numChunks, outFilePath);
       }
 
       private String usage(String error) {
@@ -104,12 +98,10 @@ public class ChunkMergingOptions {
 
    private int numChunks;
    private Path outFilePath;
-   private File[] inputFiles;
 
-   protected ChunkMergingOptions(int numChunks, Path outFilePath, File[] inputFiles) {
+   protected ChunkMergingOptions(int numChunks, Path outFilePath) {
       this.numChunks = numChunks;
       this.outFilePath = outFilePath;
-      this.inputFiles = inputFiles;
    }
 
    public int getNumChunks() {
@@ -118,10 +110,6 @@ public class ChunkMergingOptions {
 
    public Path getOutFilePath() {
       return outFilePath;
-   }
-
-   public File[] getInputFiles() {
-      return inputFiles;
    }
 
 }

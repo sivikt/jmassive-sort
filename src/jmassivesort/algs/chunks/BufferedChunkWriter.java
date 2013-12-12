@@ -59,6 +59,8 @@ public class BufferedChunkWriter implements Closeable {
             bufferSz = 0;
          }
       }
+
+      out.write(buffer, 0, bufferSz);
    }
 
    @Override

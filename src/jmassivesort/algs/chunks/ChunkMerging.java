@@ -18,11 +18,10 @@ package jmassivesort.algs.chunks;
 import jmassivesort.algs.AbstractAlgorithm;
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.util.Debugger;
-import jmassivesort.util.IOUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Merges sorted chunks {@link Chunk} into one file.
@@ -30,6 +29,8 @@ import java.io.FileNotFoundException;
  * @author Serj Sintsov
  */
 public class ChunkMerging extends AbstractAlgorithm {
+
+   private static final int BUF_PER_CHUNK = 1*1024*1024; // 1Mb
 
    private final Debugger dbg = Debugger.create(getClass());
 
@@ -39,21 +40,23 @@ public class ChunkMerging extends AbstractAlgorithm {
       if  (options == null)
          throw new IllegalArgumentException("options cannot be null");
       this.opts = options;
+
+      try {
+         SequentialChunkReader[] inputRDs = new SequentialChunkReader[this.opts.getNumChunks()];
+         Path inPath;
+         String parentPath = this.opts.getOutFilePath().getParent().toString();
+         for (int i = 0; i < this.opts.getNumChunks(); i++) {
+            inPath = Paths.get(parentPath, (i+1) + ".chunk");
+            inputRDs[i] = new SequentialChunkReader(BUF_PER_CHUNK, inPath.toFile());
+         }
+      }
+      catch (IOException e) {
+         throw new SortingAlgorithmException("Cannot read chunk file", e);
+      }
    }
 
    @Override
    public void apply() throws SortingAlgorithmException {
-//      File outFilePath = IOUtils.newFileOnFS(opts.getOutFilePath());
-//      FileInputStream[] chunks = new FileInputStream[opts.getNumChunks()];
-//      for (int i = 1; i <= opts.getNumChunks(); i++) {
-//         try {
-//            chunks[i] = new FileInputStream(i + ".txt");
-//         }
-//         catch (FileNotFoundException e) {
-//            throw new SortingAlgorithmException("Cannot find chunk number " + i, e);
-//         }
-//      }
-
 
    }
 

@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * @author Serj Sintsov
  */
-public class InMemoryChunkReaderTest {
+public class OneOffChunkReaderTest {
 
    public static void main(String[] args) throws IOException {
       test();
@@ -41,7 +41,7 @@ public class InMemoryChunkReaderTest {
          long fullStart = System.currentTimeMillis();
 
          for (int i = 1; i <= numChunks; i++) {
-            InMemoryChunkReader reader = new InMemoryChunkReader(i, numChunks, src);
+            OneOffChunkReader reader = new OneOffChunkReader(i, numChunks, src);
             Chunk chunk = reader.readChunk();
 
 //            System.out.println(">>> chunk " + i + " content");

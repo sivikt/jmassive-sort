@@ -35,17 +35,15 @@ public class Chunk {
       }
    }
 
-   private byte[] rawData;
+   private byte[] rawData = new byte[0];
    private List<ChunkMarker> markers = new ArrayList<>(0);
-
-   public Chunk(byte[] data) {
-      if (data == null)
-         throw new IllegalArgumentException("Raw data must be not null");
-      this.rawData = data;
-   }
 
    public byte[] rawData() {
       return rawData;
+   }
+
+   public void setRawData(byte[] rawData) {
+      this.rawData = rawData;
    }
 
    public List<ChunkMarker> allMarkers() {
@@ -55,6 +53,10 @@ public class Chunk {
    public ChunkMarker addMarker(int offset, int length) {
       if (offset+length >= rawData.length)
          throw new IllegalArgumentException("Marker offset and length is greater than data length");
+      return addMarkerUnsafely(offset, length);
+   }
+
+   public ChunkMarker addMarkerUnsafely(int offset, int length) {
       ChunkMarker ln = new ChunkMarker(offset, length);
       markers.add(ln);
       return ln;
