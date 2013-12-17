@@ -24,6 +24,9 @@ import jmassivesort.algs.chunks.Chunk.ChunkMarker;
  * Reads a file sequentially chunk-by-chunk {@link jmassivesort.algs.chunks.Chunk}.
  * Each chunk is filled with markers {@link ChunkMarker} which correspond to file
  * lines.
+ * <p/>
+ * Also note that this reader supports only Linux like LF markers and
+ * doesn't support unicode encoding.
  *
  * @author Serj Sintsov
  */
@@ -95,55 +98,14 @@ public class SequentialChunkReader implements Closeable {
          return null;
 
       int b;
-      int lineLen     = 0;
+      int lineLen = 0;
       int lineOff = nextByte;
 
       for (;;) {
-         b = buffer[nextByte];
-         nextByte++;
-         lineLen++;
+         b = buffer[nextByte++];
 
          if (b == -1) { // EOF
-            lineLen--;
             nextByte--;
-            chunkEnd += nextByte - lineOff;
-
-            if (lineLen <= 0)
-               return null;
-            else {
-               ch.addMarkerUnsafely(nextByte - lineLen, lineLen);
-               return null;
-            }
-         }
-         else if (isCR(b) || isLF(b)) { // EOL
-            int lnEnd = nextByte-1;
-            lineLen -= 1;
-            chunkEnd += nextByte - lineOff;
-
-            b = buffer[nextByte];
-            if (isCRLF(buffer[lnEnd], b) || isLFCR(buffer[lnEnd], b)) { // it could be either CR, LF or CRLF or LFCR
-               nextByte++;
-               chunkEnd++;
-            }
-
-            return ch.addMarkerUnsafely(lnEnd - lineLen, lineLen);
-         }
-
-         if (nextByte == chunkSz) {
-            b = buffer[nextByte];
-            if (b != -1 && !isCR(b) && !isLF(b)) {
-               if (ch.allMarkers().isEmpty())
-                  throw new IOException("Chunk size too small to store even one line of text");
-               else
-                  return null;
-            }
-            else if (b != -1) {
-               chunkEnd++;
-               // it could be either CR, LF or CRLF or LFCR
-               if (isCRLF(b, buffer[nextByte+1]) || isLFCR(b, buffer[nextByte+1]))
-                  chunkEnd++;
-            }
-
             chunkEnd += nextByte - lineOff;
 
             if (lineLen == 0)
@@ -153,23 +115,40 @@ public class SequentialChunkReader implements Closeable {
                return null;
             }
          }
-      }
-   }
+         else if (isLF(b)) { // EOL
+            chunkEnd += nextByte - lineOff;
+            return ch.addMarkerUnsafely(nextByte - lineLen - 1, lineLen);
+         }
+         else
+            lineLen++;
 
-   private boolean isCR(int c) {
-      return c == '\r';
+         if (nextByte == chunkSz) {
+            b = buffer[nextByte];
+            if (b != -1 && !isLF(b)) {
+               if (ch.allMarkers().isEmpty())
+                  throw new IOException("Chunk size too small to store even one line of text");
+               else
+                  return null;
+            }
+
+            chunkEnd += nextByte - lineOff + 1;
+
+            if (lineLen != 0)
+               ch.addMarkerUnsafely(nextByte - lineLen, lineLen);
+
+            if (b != -1 && buffer[nextByte+1] == -1)
+               ch.addMarkerUnsafely(nextByte, 0);
+
+            if (b == -1)
+               chunkEnd--;
+
+            return null;
+         }
+      }
    }
 
    private boolean isLF(int c) {
       return c == '\n';
-   }
-
-   private boolean isCRLF(int c1, int c2) {
-      return c1 == '\r' && c2 == '\n';
-   }
-
-   private boolean isLFCR(int c1, int c2) {
-      return c1 == '\n' && c2 == '\r';
    }
 
    @Override

@@ -25,6 +25,8 @@ import java.util.List;
  */
 public class Chunk {
 
+   public final static ChunkMarker EMPTY_MARKER = new ChunkMarker(0, 0);
+
    public static class ChunkMarker {
       public final int off;
       public final int len;
@@ -57,9 +59,14 @@ public class Chunk {
    }
 
    public ChunkMarker addMarkerUnsafely(int offset, int length) {
-      ChunkMarker ln = new ChunkMarker(offset, length);
-      markers.add(ln);
-      return ln;
+      if (length == 0) {
+         markers.add(EMPTY_MARKER); // just to save space
+         return EMPTY_MARKER;
+      }
+
+      ChunkMarker m = new ChunkMarker(offset, length);
+      markers.add(m);
+      return m;
    }
 
    public int compareMarkers(ChunkMarker m1, ChunkMarker m2) {

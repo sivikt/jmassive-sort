@@ -117,8 +117,7 @@ public class ChunkMerging extends AbstractAlgorithm {
             wr.write(min.chunk.rawData(), min.chunk.allMarkers().get(min.marker));
 
             if (min.chunk.allMarkers().size()-1 == min.marker) {
-               SequentialChunkReader inRd = inputRDs[min.chunkId];
-               Chunk ch = inRd.nextChunk();
+               Chunk ch = inputRDs[min.chunkId].nextChunk();
                if (ch != null)
                   pq.add(new ChunkMarkerRef(min.chunkId, ch, 0));
                else

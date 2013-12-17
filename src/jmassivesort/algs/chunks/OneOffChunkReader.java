@@ -15,8 +15,6 @@
  */
 package jmassivesort.algs.chunks;
 
-import jmassivesort.util.Debugger;
-
 import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.*;
 import jmassivesort.algs.chunks.Chunk.ChunkMarker;
@@ -27,21 +25,23 @@ import jmassivesort.algs.chunks.Chunk.ChunkMarker;
  * To minimize disk reads this implementation reads the whole
  * file's part into the memory and then separates it into lines
  * (finds lines offsets and etc.).
+ * <p/>
+ * Also note that this reader supports only Linux like LF markers and
+ * doesn't support unicode encoding.
  *
  * @author Serj Sintsov
  */
 public class OneOffChunkReader implements Closeable {
 
-   private final Debugger dbg = Debugger.create(getClass());
-
    private static final int CHUNK_OVERHEAD_SIZE = 1 * 1024 * 1024; // 1Mb
-   private static final int MAX_CHUNK_SIZE      = Integer.MAX_VALUE - CHUNK_OVERHEAD_SIZE - 1;
+   private static final int MAX_CHUNK_SIZE      = Integer.MAX_VALUE - CHUNK_OVERHEAD_SIZE;
 
    private final long chunkSz;
+   private final int  chunkOverSz;
 
    private byte[] buffer;
-   private int bufferSz;
    private int nextByte;
+   boolean countEolEof = false;
 
    private InputStream in;
 
@@ -52,8 +52,9 @@ public class OneOffChunkReader implements Closeable {
       // keep chunk size equals to the closest integer number which
       // is bigger then the decimal chunk size number (e.g. 1.2 -> 2)
       chunkSz  = (long) Math.ceil((double) src.length() / numChunks);
-      if (chunkSz == MAX_CHUNK_SIZE)
+      if (chunkSz >= MAX_CHUNK_SIZE)
          throw new IllegalArgumentException("Chunk size too large. Max value is " + MAX_CHUNK_SIZE + " byte");
+      chunkOverSz = (int) chunkSz + CHUNK_OVERHEAD_SIZE;
 
       long off = chunkId * chunkSz - chunkSz;
       if (off < src.length()) {
@@ -64,48 +65,31 @@ public class OneOffChunkReader implements Closeable {
          in = null;
    }
 
-   private void fill(int len) throws IOException {
-      buffer = new byte[len+1]; // +1 for EOF mark
+   private void fill() throws IOException {
+      int len = chunkOverSz;
+
+      buffer = new byte[chunkOverSz + 1]; // +1 to determine EOF or end of buffer
       int n = in.read(buffer, 0, len);
-      bufferSz = n > 0 ? n : 0;
-      buffer[bufferSz] = -1;
+      if (n < 0)
+         buffer[0] = -1;
+      else if (n <= chunkSz)
+         buffer[n] = -1;
+      else
+         buffer[n] = -2; // end of buffer
+
       nextByte = 0;
    }
 
    public Chunk readChunk() throws IOException {
-      dbg.startFunc("readChunk");
-      dbg.markFreeMemory();
-      dbg.startTimer();
-
       if (in == null) // just return empty chunk
          return new Chunk();
 
-      dbg.startFunc("fill buffer");
-      dbg.markFreeMemory();
-      dbg.startTimer();
-      fill((int)chunkSz + CHUNK_OVERHEAD_SIZE + 1);
-      dbg.stopTimer();
-      dbg.checkMemoryUsage();
-      dbg.endFunc("fill buffer");
+      fill();
 
       Chunk chunk = new Chunk();
       chunk.setRawData(buffer);
-
-      dbg.startFunc("read chunk lines");
-      dbg.markFreeMemory();
-      dbg.startTimer();
-
       for (;;)
          if (readLine(chunk) == null) break;
-
-      dbg.stopTimer();
-      dbg.checkMemoryUsage();
-      dbg.endFunc("read chunk lines");
-
-      dbg.stopTimer();
-      dbg.checkMemoryUsage();
-      dbg.echo("total number of lines " + chunk.rawData().length + ". total data size " + nextByte + " bytes, " + nextByte/1024/1024 + " Mb");
-      dbg.endFunc("readChunk");
 
       return chunk;
    }
@@ -125,51 +109,42 @@ public class OneOffChunkReader implements Closeable {
 
    @SuppressWarnings("ResultOfMethodCallIgnored")
    private long calcOffset(long chunkOff, long chunkSz, File f) throws IOException {
-      dbg.startFunc("calc chunk offset");
-      dbg.startTimer();
+      if (chunkOff == 0)
+         return 0;
 
       InputStream in = new FileInputStream(f);
 
-      try {
-         long realOff = 0;
-         int b;
-         int oldB;
-         long nSkip = chunkSz-1;
-         long jumps = chunkOff;
+      int b;
+      int step = (int) chunkSz-1; // Stop reading chunk if the last line exactly fits into chunkSz.
+                                  // So we'll skip one byte less to be sure we don't lost EOL.
+      long nSkips = 0;
+      long jumps = chunkOff;
 
+      try {
          while (jumps > 0) {
-            realOff += nSkip;
+            nSkips += step;
             jumps -= chunkSz;
-            in.skip(nSkip);
-            nSkip = chunkSz-1;
+            in.skip(step);
 
             for (;;) {
                b = in.read();
-               realOff++;
+               nSkips++;
 
-               if (b == -1) {
-                  dbg.stopTimer();
-                  dbg.endFunc("calc chunk offset");
-                  return realOff;
-               }
-               else if (isCR(b) || isLF(b)) {
-                  oldB = b;
-                  b = in.read();
-
-                  if (!isCRLF(oldB, b) && !isLFCR(oldB, b))
-                     nSkip--;
-                  else
-                     realOff++;
+               if (b == -1)
+                  return nSkips;
+               else if (isLF(b)) {
+                  if (jumps == 0) {
+                     if (nSkips == f.length())
+                        nSkips--;
+                     return nSkips;
+                  }
 
                   break;
                }
             }
          }
 
-         dbg.stopTimer();
-         dbg.endFunc("calc chunk offset");
-
-         return realOff;
+         return nSkips;
       }
       finally {
          closeSilently(in);
@@ -182,52 +157,51 @@ public class OneOffChunkReader implements Closeable {
 
       int b;
       int lineTailLen = 0;
-      int nextLineOff = nextByte;
       int lineLen     = 0;
 
       for (;;) {
-         b = buffer[nextByte];
-         nextByte++;
-         lineTailLen++;
+         b = buffer[nextByte++];
 
-         if (b == -1) { // EOF
-            lineLen += lineTailLen-1;
+         if (b < 0) { // EOF
+            lineLen += lineTailLen;
             nextByte--;
 
-            if (lineLen <= 0)
+            if (lineLen == 0)
                return null;
             else
                return chunk.addMarker(nextByte - lineLen, lineLen);
          }
-         else if (isCR(b) || isLF(b)) { // EOL
+         else if (isLF(b)) { // EOL
             int lnEnd = nextByte-1;
-            lineLen += lineTailLen-1;
+            lineLen += lineTailLen;
 
             if (nextByte > chunkSz)
                return chunk.addMarker(lnEnd - lineLen, lineLen);
 
-            b = buffer[nextByte];
-            if (isCRLF(buffer[lnEnd], b) || isLFCR(buffer[lnEnd], b)) // it could be either CR,
-               nextByte++;                                            // LF or CRLF or LFCR
+            if (!countEolEof && buffer[nextByte] == -1) { // don't forget the last EOL+EOF
+               nextByte--;
+               countEolEof = true;
+            }
 
             return chunk.addMarker(lnEnd - lineLen, lineLen);
          }
+         else
+            lineTailLen++;
 
          if (nextByte == chunkSz) {
             b = buffer[nextByte];
-            if (b != -1 && !isCR(b) && !isLF(b))
+            if (b > 0 && !isLF(b))
                continue;
 
-            nextByte++;
             lineLen += lineTailLen;
             if (lineLen == 0)
                return null;
             else
-               return chunk.addMarker(nextByte-1 - lineLen, lineLen);
+               return chunk.addMarker(nextByte - lineLen, lineLen);
          }
-         else if (nextByte == chunkSz + CHUNK_OVERHEAD_SIZE) {   // allow chunks of more
-            b = buffer[nextByte];                                // than the official size
-            if (b != -1 && !isCR(b) && !isLF(b))
+         else if (nextByte == chunkOverSz) { // allow chunks of more than the official size
+            b = buffer[nextByte];
+            if (b > 0 && !isLF(b))
                throw new IOException("Chunk size too small to store even one line of text");
 
             lineLen += lineTailLen;
@@ -236,29 +210,11 @@ public class OneOffChunkReader implements Closeable {
             else
                return chunk.addMarker(nextByte - lineLen, lineLen);
          }
-
-         if (nextByte == bufferSz) {
-            lineLen    += bufferSz-nextLineOff;
-            lineTailLen = 0;
-            nextLineOff = 0;
-         }
       }
-   }
-
-   private boolean isCR(int c) {
-      return c == '\r';
    }
 
    private boolean isLF(int c) {
       return c == '\n';
-   }
-
-   private boolean isCRLF(int c1, int c2) {
-      return c1 == '\r' && c2 == '\n';
-   }
-
-   private boolean isLFCR(int c1, int c2) {
-      return c1 == '\n' && c2 == '\r';
    }
 
    @Override
