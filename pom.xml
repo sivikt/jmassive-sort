@@ -33,6 +33,13 @@
          <version>6.8</version>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>1.3.2</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -48,7 +55,7 @@
          <testResource>
             <directory>${basedir}/testSrc/resources</directory>
             <excludes>
-               <exclude>**/*.txt</exclude>
+               <exclude>autogen/**/*.txt</exclude>
             </excludes>
          </testResource>
       </testResources>
