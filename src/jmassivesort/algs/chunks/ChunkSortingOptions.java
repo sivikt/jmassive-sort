@@ -23,6 +23,7 @@ import static jmassivesort.util.IOUtils.getFileOnFS;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -94,14 +95,7 @@ public class ChunkSortingOptions {
    public static class ChunkSortingBuilder implements SortingAlgorithmBuilder {
       @Override
       public SortingAlgorithm build(String[] options) throws CliOptionsBuilderException {
-         dbg.startFunc("build options and alg instance");
-         dbg.startTimer();
-         dbg.markFreeMemory();
          ChunkSorting chunkSorting = new ChunkSorting(ChunkSortingOptions.builder().build(options));
-         dbg.checkMemoryUsage();
-         dbg.stopTimer();
-         dbg.endFunc("build options and alg instance");
-
          return chunkSorting;
       }
    }

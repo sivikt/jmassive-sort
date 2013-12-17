@@ -100,38 +100,8 @@ public class ChunkMerging extends AbstractAlgorithm {
       PriorityQueue<ChunkMarkerRef> pq = new PriorityQueue<>(opts.getNumChunks(), asc);
 
       try {
-         for (int i = 0; i < inputRDs.length; i++) {
-            Chunk ch = inputRDs[i].nextChunk();
-            if (ch != null)
-               pq.add(new ChunkMarkerRef(i, ch, 0));
-            else
-               closeSilently(inputRDs[i]);
-         }
-
-         dbg.startFunc("merging");
-         dbg.markFreeMemory();
-         dbg.startTimer();
-
-         while (!pq.isEmpty()) {
-            ChunkMarkerRef min = pq.poll();
-            wr.write(min.chunk.rawData(), min.chunk.allMarkers().get(min.marker));
-
-            if (min.chunk.allMarkers().size()-1 == min.marker) {
-               Chunk ch = inputRDs[min.chunkId].nextChunk();
-               if (ch != null)
-                  pq.add(new ChunkMarkerRef(min.chunkId, ch, 0));
-               else
-                  closeSilently(inputRDs[min.chunkId]);
-            }
-            else {
-               min.marker++;
-               pq.add(min);
-            }
-         }
-
-         dbg.stopTimer();
-         dbg.checkMemoryUsage();
-         dbg.endFunc("merging");
+         prefillHeapWithFirstMarkers(pq);
+         mergeMarkers(pq, wr);
       }
       catch (IOException e) {
          throw new SortingAlgorithmException("Cannot read chunk or write to output", e);
@@ -142,6 +112,51 @@ public class ChunkMerging extends AbstractAlgorithm {
       dbg.stopTimer();
       dbg.checkMemoryUsage();
       dbg.endFunc("apply");
+   }
+
+   private void prefillHeapWithFirstMarkers(PriorityQueue<ChunkMarkerRef> pq) throws IOException {
+      dbg.startFunc("prefillHeapWithFirstMarkers");
+      dbg.markFreeMemory();
+      dbg.startTimer();
+
+      for (int i = 0; i < inputRDs.length; i++) {
+         Chunk ch = inputRDs[i].nextChunk();
+         if (ch != null)
+            pq.add(new ChunkMarkerRef(i, ch, 0));
+         else
+            closeSilently(inputRDs[i]);
+      }
+
+      dbg.stopTimer();
+      dbg.checkMemoryUsage();
+      dbg.endFunc("prefillHeapWithFirstMarkers");
+   }
+
+   private void mergeMarkers(PriorityQueue<ChunkMarkerRef> pq, BufferedChunkWriter wr) throws IOException {
+      dbg.startFunc("mergeMarkers");
+      dbg.markFreeMemory();
+      dbg.startTimer();
+
+      while (!pq.isEmpty()) {
+         ChunkMarkerRef min = pq.poll();
+         wr.write(min.chunk.rawData(), min.chunk.allMarkers().get(min.marker));
+
+         if (min.chunk.allMarkers().size()-1 == min.marker) {
+            Chunk ch = inputRDs[min.chunkId].nextChunk();
+            if (ch != null)
+               pq.add(new ChunkMarkerRef(min.chunkId, ch, 0));
+            else
+               closeSilently(inputRDs[min.chunkId]);
+         }
+         else {
+            min.marker++;
+            pq.add(min);
+         }
+      }
+
+      dbg.stopTimer();
+      dbg.checkMemoryUsage();
+      dbg.endFunc("mergeMarkers");
    }
 
    private static class ChunkMarkerRef {
