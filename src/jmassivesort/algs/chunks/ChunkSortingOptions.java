@@ -18,12 +18,10 @@ package jmassivesort.algs.chunks;
 import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
-import jmassivesort.util.Debugger;
 import static jmassivesort.util.IOUtils.getFileOnFS;
 
 import java.io.File;
 import java.net.URI;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -34,8 +32,6 @@ import java.util.Map;
  * @author Serj Sintsov
  */
 public class ChunkSortingOptions {
-
-   private static final Debugger dbg = Debugger.create(ChunkSortingOptions.class);
 
    public static Builder builder() {
       return new Builder();
