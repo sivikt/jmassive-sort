@@ -86,6 +86,8 @@ public class JMassiveSort {
          alg.build(algorithmOptions).apply();
          dbg.stopTimer();
          dbg.endFunc("Start alg");
+
+         System.exit(0);
       }
       catch (CliOptionsBuilderException e) {
          printUsage(e.getMessage(), algorithmName, e.getOptionDescriptions());

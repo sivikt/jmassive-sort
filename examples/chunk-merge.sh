@@ -5,17 +5,7 @@ if [ -z "$1" ]; then
    exit 1
 fi
 
-if [ -z "$2" ]; then
-   echo "Specify total chunks number"
-   exit 1
-fi
-
-if [ -z "$3" ]; then
-   echo "Specify output file"
-   exit 1
-fi
-
-java -jar $1 chunk-merging $2 $3
+java -jar $1 chunk-merging
 case "$?" in
    0)
       echo SUCCESS

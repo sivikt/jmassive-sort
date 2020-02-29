@@ -18,12 +18,12 @@ package jmassivesort.algs.chunks;
 import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
-import static jmassivesort.util.IOUtils.getFileOnFS;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
-import java.io.File;
+import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,15 +45,14 @@ public class ChunkSortingOptions {
       private final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
          put("<chunkId>", "0 < Integer value <= <numChunks>. The result of sorting is stored into file <chunkId>.txt");
          put("<numChunks>", "Integer value > 0. Together with the <chunkId> used to determine what part of file to sort");
-         put("<inputFile>", "Input file path in RFC 2396 format");
       }};
 
       protected int chunkId;
       protected int numChunks;
-      protected File inputFile;
+      protected Path inPath;
 
       public ChunkSortingOptions build(String[] options) throws CliOptionsBuilderException {
-         if (options == null || options.length != 3)
+         if (options == null || options.length != 2)
             throw new CliOptionsBuilderException(usage("Incorrect usage"), optionDescriptions);
 
          try {
@@ -62,29 +61,29 @@ public class ChunkSortingOptions {
                throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
 
             chunkId = Integer.parseInt(options[0]);
-            if (chunkId < 1)
+            if (chunkId < 0 || chunkId >= numChunks)
                throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
+            chunkId++; // just to avoid +1 increments
          }
          catch (NumberFormatException ex) {
             throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
          }
 
          try {
-            Path inPath = Paths.get(URI.create(options[2]));
-            inputFile = getFileOnFS(inPath);
+            inPath = new Path(URI.create("hdfs:///in/input"));
          }
          catch (Exception e) {
             throw new CliOptionsBuilderException(usage("Incorrect input file path"), optionDescriptions);
          }
 
          String outFileName = chunkId + ".chunk";
-         Path outputFilePath = Paths.get(inputFile.getParent().toString(), outFileName);
+         Path outPath = new Path("hdfs:///tmp", outFileName);
 
-         return new ChunkSortingOptions(chunkId, numChunks, inputFile, outputFilePath);
+         return new ChunkSortingOptions(chunkId, numChunks, inPath, outPath);
       }
 
       private String usage(String error) {
-         return error + ". Specify options in order <chunkId> <numChunks> <inputFile>";
+         return error + ". Specify options in order <chunkId> <numChunks>";
       }
    }
 
@@ -98,14 +97,22 @@ public class ChunkSortingOptions {
 
    private int chunkId;
    private int numChunks;
-   private File inputFile;
-   private Path outputFilePath;
+   private Path inPath;
+   private Path outPath;
+   private FileSystem fs;
 
-   protected ChunkSortingOptions(int chunksId, int numChunks, File inputFile, Path outputFile) {
+   protected ChunkSortingOptions(int chunksId, int numChunks, Path inPath, Path outPath) {
       this.chunkId = chunksId;
       this.numChunks = numChunks;
-      this.inputFile = inputFile;
-      this.outputFilePath = outputFile;
+      this.inPath = inPath;
+      this.outPath = outPath;
+
+      Configuration conf = new Configuration();
+      try {
+         fs = FileSystem.get(conf);
+      } catch (IOException e) {
+         throw new RuntimeException("hdfs error", e);
+      }
    }
 
    public int getChunkId() {
@@ -116,12 +123,15 @@ public class ChunkSortingOptions {
       return numChunks;
    }
 
-   public File getInputFile() {
-      return inputFile;
+   public FileSystem getFs() {
+      return fs;
    }
 
-   public Path getOutputFilePath() {
-      return outputFilePath;
+   public org.apache.hadoop.fs.Path getInPath() {
+      return inPath;
    }
 
+   public org.apache.hadoop.fs.Path getOutPath() {
+      return outPath;
+   }
 }

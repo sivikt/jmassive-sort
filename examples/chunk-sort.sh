@@ -10,14 +10,9 @@ if [ -z "$2" ]; then
    exit 1
 fi
 
-if [ -z "$3" ]; then
-   echo "Specify input file"
-   exit 1
-fi
-
 for i in $(seq 1 $2); do
    echo sort chunk $i
-   java -jar $1 chunk-sorting $i $2 $3
+   java -jar $1 chunk-sorting $i $2
    case "$?" in
       0)
          echo SUCCESS

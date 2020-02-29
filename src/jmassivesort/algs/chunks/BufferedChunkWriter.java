@@ -15,6 +15,8 @@
  */
 package jmassivesort.algs.chunks;
 
+import org.apache.hadoop.fs.*;
+
 import java.io.*;
 import java.util.List;
 
@@ -35,8 +37,8 @@ public class BufferedChunkWriter implements Closeable, Flushable {
    private int bufferSz = 0;
    private byte[] buffer = new byte[MAX_BUFFER_SZ];
 
-   public BufferedChunkWriter(File dest) throws FileNotFoundException {
-      out = new FileOutputStream(dest);
+   public BufferedChunkWriter(FileSystem fs, Path outPath) throws IOException {
+      out = fs.create(outPath);
    }
 
    public void write(byte[] chunkData, List<ChunkMarker> lines) throws IOException {

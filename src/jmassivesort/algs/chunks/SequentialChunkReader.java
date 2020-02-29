@@ -19,6 +19,7 @@ import java.io.*;
 
 import static jmassivesort.util.IOUtils.closeSilently;
 import jmassivesort.algs.chunks.Chunk.ChunkMarker;
+import org.apache.hadoop.fs.*;
 
 /**
  * Reads a file sequentially chunk-by-chunk {@link jmassivesort.algs.chunks.Chunk}.
@@ -44,9 +45,9 @@ public class SequentialChunkReader implements Closeable {
 
    private InputStream in;
 
-   public SequentialChunkReader(int chunkSz, File src) throws IOException {
-      if (!src.exists() || !src.isFile())
-         throw new FileNotFoundException("No such file '" + src.getAbsolutePath() + "'");
+   public SequentialChunkReader(int chunkSz, FileSystem fs, Path inPath) throws IOException {
+      if (!fs.exists(inPath) || !fs.isFile(inPath))
+         throw new FileNotFoundException("No such file '" + inPath + "'");
 
       this.chunkSz = chunkSz;
 
@@ -55,7 +56,7 @@ public class SequentialChunkReader implements Closeable {
       if (chunkSz == MAX_CHUNK_SIZE)
          throw new IllegalArgumentException("Chunk size too large. Max value is " + MAX_CHUNK_SIZE + " byte");
 
-      in = new FileInputStream(src);
+      in = fs.open(inPath);
       buffer = new byte[chunkSz + EOL_EXTRA_SIZE]; // + some extra bytes to determine EOF or EOL
    }
 
@@ -63,14 +64,26 @@ public class SequentialChunkReader implements Closeable {
       bufferSz -= chunkEnd;
 
       System.arraycopy(buffer, chunkEnd, buffer, 0, bufferSz);
-      int n = in.read(buffer, bufferSz, buffer.length-bufferSz);
 
-      if (n < 0)
-         buffer[bufferSz] = -1;
-      else {
-         bufferSz += n;
-         if (bufferSz < buffer.length)
+      int len = buffer.length-bufferSz;
+      for (;;) {
+         int n = in.read(buffer, bufferSz, len);
+
+         if (n < 0) {
             buffer[bufferSz] = -1;
+            break;
+         }
+         else if (n < len) {
+            len -= n;
+            bufferSz += n;
+         }
+         else {
+            bufferSz += n;
+            if (bufferSz < buffer.length)
+               buffer[bufferSz] = -1;
+
+            break;
+         }
       }
 
       chunkEnd = 0;

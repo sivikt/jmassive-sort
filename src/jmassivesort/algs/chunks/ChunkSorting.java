@@ -21,9 +21,7 @@ import static jmassivesort.algs.chunks.OrderFunctions.asc;
 import jmassivesort.util.Debugger;
 
 import static jmassivesort.util.IOUtils.closeSilently;
-import static jmassivesort.util.IOUtils.newFileOnFS;
 
-import java.io.File;
 import java.util.Collections;
 
 /**
@@ -65,12 +63,10 @@ public class ChunkSorting extends AbstractAlgorithm {
       OneOffChunkReader cr = null;
 
       try {
-         File srcFile = opts.getInputFile();
-
          dbg.startFunc("read chunk");
          dbg.markFreeMemory();
 
-         cr = new OneOffChunkReader(opts.getChunkId(), opts.getNumChunks(), srcFile);
+         cr = new OneOffChunkReader(opts.getChunkId(), opts.getNumChunks(), opts.getFs(), opts.getInPath());
          Chunk chunk = cr.readChunk();
 
          dbg.checkMemoryUsage();
@@ -79,7 +75,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          return chunk;
       }
       catch (Exception e) {
-         throw new SortingAlgorithmException("Cannot read chunk from file '" + opts.getInputFile() + "'", e);
+         throw new SortingAlgorithmException("Cannot read chunk from file '" + opts.getInPath() + "'", e);
       }
       finally {
          closeSilently(cr);
@@ -102,13 +98,11 @@ public class ChunkSorting extends AbstractAlgorithm {
       BufferedChunkWriter chWr = null;
 
       try {
-         File outFile = newFileOnFS(opts.getOutputFilePath());
-
          dbg.startFunc("write to disk");
          dbg.markFreeMemory();
          dbg.startTimer();
 
-         chWr = new BufferedChunkWriter(outFile);
+         chWr = new BufferedChunkWriter(opts.getFs(), opts.getOutPath());
          chWr.write(ch.rawData(), ch.allMarkers());
 
          dbg.stopTimer();
@@ -116,7 +110,7 @@ public class ChunkSorting extends AbstractAlgorithm {
          dbg.endFunc("write to disk");
       }
       catch (Exception e) {
-         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getOutputFilePath() + "'", e);
+         throw new SortingAlgorithmException("Cannot save chunk in file '" + opts.getOutPath() + "'", e);
       }
       finally {
          closeSilently(chWr);

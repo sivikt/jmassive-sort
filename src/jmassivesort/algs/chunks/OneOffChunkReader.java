@@ -18,6 +18,7 @@ package jmassivesort.algs.chunks;
 import static jmassivesort.util.IOUtils.closeSilently;
 import java.io.*;
 import jmassivesort.algs.chunks.Chunk.ChunkMarker;
+import org.apache.hadoop.fs.*;
 
 /**
  * Reads a part of the file's content called {@link Chunk}.
@@ -45,40 +46,53 @@ public class OneOffChunkReader implements Closeable {
 
    private InputStream in;
 
-   public OneOffChunkReader(int chunkId, int numChunks, File src) throws IOException {
-      if (!src.exists() || !src.isFile())
-         throw new FileNotFoundException("No such file '" + src.getAbsolutePath() + "'");
+   public OneOffChunkReader(int chunkId, int numChunks, FileSystem fs, Path inPath) throws IOException {
+      if (!fs.exists(inPath) || !fs.isFile(inPath))
+         throw new FileNotFoundException("No such file '" + inPath.toString() + "'");
+
+      long fLen = fs.getFileStatus(inPath).getLen();
 
       // keep chunk size equals to the closest integer number which
       // is bigger then the decimal chunk size number (e.g. 1.2 -> 2)
-      chunkSz  = (long) Math.ceil((double) src.length() / numChunks);
+      chunkSz  = (long) Math.ceil((double) fLen / numChunks);
       if (chunkSz >= MAX_CHUNK_SIZE)
          throw new IllegalArgumentException("Chunk size too large. Max value is " + MAX_CHUNK_SIZE + " byte");
       chunkOverSz = (int) chunkSz + CHUNK_OVERHEAD_SIZE;
 
       long off = chunkId * chunkSz - chunkSz;
-      if (off < src.length()) {
-         long chunkOff = calcOffset(off, chunkSz, src);
-         in = createInputStream(src, chunkOff);
+      if (off < fLen) {
+         long chunkOff = calcOffset(off, chunkSz, fs, inPath);
+         in = createInputStream(fs, inPath, chunkOff);
       }
       else // too many chunks
          in = null;
    }
 
    private void fill() throws IOException {
-      int len = chunkOverSz;
-
       buffer = new byte[chunkOverSz + 1]; // +1 to determine EOF or end of buffer
-      int n = in.read(buffer, 0, len);
-      if (n < 0)
-         buffer[0] = -1;
-      else if (n <= chunkSz)
-         buffer[n] = -1;
-      else
-         buffer[n] = -2; // end of buffer
+
+      int len = chunkOverSz;
+      int off = 0;
+      for (;;) {
+         int n = in.read(buffer, off, len);
+         if (n < 0) {
+            buffer[off] = -1;
+            break;
+         }
+         else if (n < len) {
+            len -= n;
+            off += n;
+         }
+         else {
+            buffer[chunkOverSz] = -2; // end of buffer
+            break;
+         }
+      }
 
       nextByte = 0;
    }
+
+
 
    public Chunk readChunk() throws IOException {
       if (in == null) // just return empty chunk
@@ -95,8 +109,8 @@ public class OneOffChunkReader implements Closeable {
    }
 
    @SuppressWarnings("ResultOfMethodCallIgnored")
-   private InputStream createInputStream(File f, long offset) throws IOException {
-      InputStream in = new FileInputStream(f);
+   private InputStream createInputStream(FileSystem fs, Path inPath, long offset) throws IOException {
+      InputStream in = fs.open(inPath);
       try {
          in.skip(offset);
          return in;
@@ -108,11 +122,12 @@ public class OneOffChunkReader implements Closeable {
    }
 
    @SuppressWarnings("ResultOfMethodCallIgnored")
-   private long calcOffset(long chunkOff, long chunkSz, File f) throws IOException {
+   private long calcOffset(long chunkOff, long chunkSz, FileSystem fs, Path inPath) throws IOException {
       if (chunkOff == 0)
          return 0;
 
-      InputStream in = new FileInputStream(f);
+      InputStream in = fs.open(inPath);
+      long fLen = fs.getFileStatus(inPath).getLen();
 
       int b;
       int step = (int) chunkSz-1; // Stop reading chunk if the last line exactly fits into chunkSz.
@@ -134,7 +149,7 @@ public class OneOffChunkReader implements Closeable {
                   return nSkips;
                else if (isLF(b)) {
                   if (jumps == 0) {
-                     if (nSkips == f.length())
+                     if (nSkips == fLen)
                         nSkips--;
                      return nSkips;
                   }

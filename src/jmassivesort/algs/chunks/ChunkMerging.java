@@ -18,14 +18,14 @@ package jmassivesort.algs.chunks;
 import jmassivesort.algs.AbstractAlgorithm;
 import jmassivesort.algs.SortingAlgorithmException;
 import jmassivesort.util.Debugger;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static jmassivesort.util.IOUtils.closeSilently;
-import static jmassivesort.util.IOUtils.newFileOnFS;
 
 /**
  * Merges sorted chunks {@link Chunk} into one file.
@@ -53,12 +53,10 @@ public class ChunkMerging extends AbstractAlgorithm {
       dbg.startTimer();
 
       try {
-         inputRDs = new SequentialChunkReader[this.opts.getNumChunks()];
-         Path inPath;
-         String parentPath = this.opts.getOutFilePath().getParent().toString();
-         for (int i = 0; i < this.opts.getNumChunks(); i++) {
-            inPath = Paths.get(parentPath, (i+1) + ".chunk");
-            inputRDs[i] = new SequentialChunkReader(BUF_PER_CHUNK, inPath.toFile());
+         List<Path> chPaths = listChunks();
+         inputRDs = new SequentialChunkReader[chPaths.size()];
+         for (int i = 0; i < chPaths.size(); i++) {
+            inputRDs[i] = new SequentialChunkReader(BUF_PER_CHUNK, opts.getFs(), chPaths.get(i));
          }
       }
       catch (IOException e) {
@@ -70,14 +68,23 @@ public class ChunkMerging extends AbstractAlgorithm {
       dbg.endFunc("createChunksReaders");
    }
 
+   private List<Path> listChunks() throws IOException {
+      List<Path> paths = new ArrayList<>();
+      RemoteIterator<LocatedFileStatus> it = opts.getFs().listFiles(this.opts.getChunksDirPath(), false);
+
+      while (it.hasNext())
+         paths.add(it.next().getPath());
+
+      return paths;
+   }
+
    private BufferedChunkWriter createOutputWriter() {
       try {
          dbg.startFunc("createOutputWriter");
          dbg.markFreeMemory();
          dbg.startTimer();
 
-         File outFile = newFileOnFS(opts.getOutFilePath());
-         BufferedChunkWriter wr = new BufferedChunkWriter(outFile);
+         BufferedChunkWriter wr = new BufferedChunkWriter(opts.getFs(), opts.getOutPath());
 
          dbg.stopTimer();
          dbg.checkMemoryUsage();
@@ -97,7 +104,7 @@ public class ChunkMerging extends AbstractAlgorithm {
 
       createChunksReaders();
       BufferedChunkWriter wr = createOutputWriter();
-      PriorityQueue<ChunkMarkerRef> pq = new PriorityQueue<>(opts.getNumChunks(), asc);
+      PriorityQueue<ChunkMarkerRef> pq = new PriorityQueue<>(inputRDs.length, asc);
 
       try {
          prefillHeapWithFirstMarkers(pq);

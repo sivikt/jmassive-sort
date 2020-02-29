@@ -28,7 +28,7 @@ public class ChunkMergingTest {
 
    public static void main(String[] args) throws IOException {
       long start = System.currentTimeMillis();
-      JMassiveSort.main(new String[]{"chunk-merging", "10", "file:///home/sivikt/IThings/my-dev/jmassive-sort/testSrc/resources/merged.out"});
+      JMassiveSort.main(new String[]{"chunk-merging", "10", "hdfs:///user/inputBig.txt"});
       long end = System.currentTimeMillis();
 
       System.out.println("Merged in " + (double)(end - start)/1000 + " s");

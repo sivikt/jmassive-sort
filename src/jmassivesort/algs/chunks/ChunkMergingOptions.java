@@ -19,10 +19,12 @@ import jmassivesort.CliOptionsBuilderException;
 import jmassivesort.algs.SortingAlgorithm;
 import jmassivesort.algs.SortingAlgorithmBuilder;
 import jmassivesort.util.Debugger;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
+import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,35 +46,37 @@ public class ChunkMergingOptions {
 
    public static class Builder {
       private final Map<String, String> optionDescriptions = new HashMap<String, String>() {{
-         put("<numChunks>", "Integer value > 0. The number of chunks it has to merge");
-         put("<outputFile>", "Output sorted file");
+         put("<numMerge>", "Integer value > 0. Merge number");
+         put("<numChunks>", "Integer value > 0. Number of chunks it has to merge");
       }};
 
       protected int numChunks;
       protected Path outFilePath;
+      protected Path chunksDirPath;
 
       public ChunkMergingOptions build(String[] options) throws CliOptionsBuilderException {
-         if (options == null || options.length != 2)
-            throw new CliOptionsBuilderException(usage("Incorrect usage"), optionDescriptions);
+//         if (options == null || options.length != 1)
+//            throw new CliOptionsBuilderException(usage("Incorrect usage"), optionDescriptions);
+//
+//         try {
+//            numChunks = Integer.parseInt(options[0]);
+//            if (numChunks < 1)
+//               throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
+//         }
+//         catch (NumberFormatException ex) {
+//            throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
+//         }
 
          try {
-            numChunks = Integer.parseInt(options[0]);
-            if (numChunks < 1)
-               throw new CliOptionsBuilderException(usage("Incorrect option format"), optionDescriptions);
-         }
-         catch (NumberFormatException ex) {
-            throw new CliOptionsBuilderException(usage("Incorrect option value"), optionDescriptions);
-         }
-
-         try {
-            outFilePath = Paths.get(URI.create(options[1]));
+            outFilePath = new Path(URI.create("hdfs:///out/merge.out"));
+            chunksDirPath = new Path(URI.create("hdfs:///tmp/"));
          }
          catch (Exception e) {
-            throw new CliOptionsBuilderException(usage("Incorrect output path"), optionDescriptions);
+            throw new CliOptionsBuilderException(usage("Incorrect path"), optionDescriptions);
          }
 
 
-         return new ChunkMergingOptions(numChunks, outFilePath);
+         return new ChunkMergingOptions(outFilePath, chunksDirPath);
       }
 
       private String usage(String error) {
@@ -95,20 +99,31 @@ public class ChunkMergingOptions {
       }
    }
 
-   private int numChunks;
    private Path outFilePath;
+   private Path chunksDirPath;
+   private FileSystem fs;
 
-   protected ChunkMergingOptions(int numChunks, Path outFilePath) {
-      this.numChunks = numChunks;
+   protected ChunkMergingOptions(Path outFilePath, Path chunksDirPath) {
       this.outFilePath = outFilePath;
+      this.chunksDirPath = chunksDirPath;
+
+      Configuration conf = new Configuration();
+      try {
+         fs = FileSystem.get(conf);
+      } catch (IOException e) {
+         throw new RuntimeException("hdfs error", e);
+      }
    }
 
-   public int getNumChunks() {
-      return numChunks;
-   }
-
-   public Path getOutFilePath() {
+   public Path getOutPath() {
       return outFilePath;
    }
 
+   public Path getChunksDirPath() {
+      return chunksDirPath;
+   }
+
+   public FileSystem getFs() {
+      return fs;
+   }
 }
